@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+LOG_PREFIX="[skill-sync]"
+SCRIPT_NAME="$(basename "$0")"
+
+resolve_script_path() {
+  local source="$1"
+  local dir=""
+  while [ -L "$source" ]; do
+    dir="$(cd -P "$(dirname "$source")" && pwd)"
+    source="$(readlink "$source")"
+    if [[ "$source" != /* ]]; then
+      source="${dir}/${source}"
+    fi
+  done
+  dir="$(cd -P "$(dirname "$source")" && pwd)"
+  printf "%s/%s\n" "$dir" "$(basename "$source")"
+}
+
+SCRIPT_PATH="$(resolve_script_path "${BASH_SOURCE[0]}")"
+REPO_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+SYNC_ENGINE="${REPO_ROOT}/scripts/sync-skills.sh"
+
+usage() {
+  cat <<EOF
+Usage:
+  ${SCRIPT_NAME} sync [target] [options]
+  ${SCRIPT_NAME} --help
+
+Commands:
+  sync                Run skill synchronization
+
+Target:
+  all|codex|claude-code|openclaw
+  Default: all
+
+Examples:
+  ${SCRIPT_NAME} sync codex
+  ${SCRIPT_NAME} sync all --commit HEAD
+  ${SCRIPT_NAME} sync codex --dry-run --verbose
+EOF
+}
+
+usage_sync() {
+  cat <<EOF
+Usage:
+  ${SCRIPT_NAME} sync [target] [options]
+
+Target:
+  all|codex|claude-code|openclaw
+  Default: all
+
+Options:
+  --all           Full sync (default when mode is omitted)
+  --commit <ref>  Incremental sync by commit
+  --dry-run       Print planned actions only
+  --verbose       Print verbose logs
+  -h, --help      Show this help
+EOF
+}
+
+log_error() {
+  printf "%s ERROR: %s\n" "$LOG_PREFIX" "$*" >&2
+}
+
+die() {
+  log_error "$*"
+  exit 1
+}
+
+is_valid_target() {
+  case "$1" in
+    all|codex|claude-code|openclaw) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+run_sync() {
+  local target="all"
+  local has_mode=0
+  local -a passthrough=()
+
+  if [ $# -gt 0 ] && [[ "$1" != -* ]]; then
+    target="$1"
+    shift
+  fi
+
+  is_valid_target "$target" || die "Invalid target '${target}' (expected all|codex|claude-code|openclaw)"
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --all)
+        has_mode=1
+        passthrough+=("$1")
+        shift
+        ;;
+      --commit)
+        [ $# -ge 2 ] || die "--commit requires a ref value"
+        has_mode=1
+        passthrough+=("$1" "$2")
+        shift 2
+        ;;
+      --dry-run|--verbose)
+        passthrough+=("$1")
+        shift
+        ;;
+      -h|--help)
+        usage_sync
+        exit 0
+        ;;
+      --target)
+        die "--target is managed by '${SCRIPT_NAME} sync <target>'"
+        ;;
+      *)
+        die "Unknown option for sync: $1"
+        ;;
+    esac
+  done
+
+  if [ "$has_mode" -eq 0 ]; then
+    passthrough=(--all "${passthrough[@]}")
+  fi
+
+  [ -x "$SYNC_ENGINE" ] || die "Sync engine not executable: ${SYNC_ENGINE}"
+  "$SYNC_ENGINE" --target "$target" "${passthrough[@]}"
+}
+
+main() {
+  local cmd="${1:-}"
+  case "$cmd" in
+    ""|-h|--help)
+      usage
+      exit 0
+      ;;
+    sync)
+      shift
+      run_sync "$@"
+      ;;
+    *)
+      die "Unknown command: ${cmd}"
+      ;;
+  esac
+}
+
+main "$@"
