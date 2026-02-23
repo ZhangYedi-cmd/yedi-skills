@@ -119,7 +119,7 @@ run_sync() {
   done
 
   if [ "$has_mode" -eq 0 ]; then
-    passthrough=(--all "${passthrough[@]}")
+    passthrough=(--all)
   fi
 
   [ -x "$SYNC_ENGINE" ] || die "Sync engine not executable: ${SYNC_ENGINE}"
