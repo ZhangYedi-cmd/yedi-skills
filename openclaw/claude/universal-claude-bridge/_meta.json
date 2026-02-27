@@ -1,0 +1,5 @@
+{
+  "name": "universal-claude-bridge",
+  "version": "1.0.0",
+  "description": "Bidirectional bridge between OpenClaw and Claude Code"
+}
