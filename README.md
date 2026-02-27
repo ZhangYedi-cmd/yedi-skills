@@ -70,6 +70,25 @@ skillsync sync claude-code --dry-run --verbose
 - Git `post-commit` hook 会在提交后执行同步。
 - 同步失败不会影响提交成功（只输出报错日志）。
 
+## 维护工具（索引 / 版本 / 漂移）
+
+新增维护脚本：`scripts/skill-maintenance.py`
+
+```bash
+# 一次执行：补 VERSION/CHANGELOG + 生成索引 + 漂移检查
+python3 scripts/skill-maintenance.py all
+
+# 仅生成索引
+python3 scripts/skill-maintenance.py index
+
+# 仅检查漂移（源仓库 vs ~/.codex|~/.claude|~/.openclaw）
+python3 scripts/skill-maintenance.py drift
+```
+
+> 说明：
+> - 索引输出为仓库根目录 `SKILLS_INDEX.md`
+> - 漂移检查会提示目标目录中的 unmanaged skills（不阻断通过）
+
 ## 详细文档
 
 完整规则、冲突处理、删除策略、安装细节见：
