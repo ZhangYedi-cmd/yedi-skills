@@ -182,6 +182,12 @@ tags:
 - [[{atom-1}]] — {一句话描述}
 - [[{atom-2}]] — {一句话描述}
 - ...
+
+## 下一步建议
+
+1. **立即可做**：[来自今日内容的零成本可试动作]
+2. **值得跟进**：[需要花 30 分钟以上的事项]
+3. **待观察**：[不需要行动，但值得持续关注的信号]
 ```
 
 ### Weekly 输出
@@ -238,6 +244,5 @@ tags:
 
 ## 建议
 
-试试 `/knowledge-forge ingest <url>` 摄入一些感兴趣的内容，
-或者配置 `_config/sources.yaml` 后运行 `/knowledge-forge patrol` 自动巡逻。
+试试 `/knowledge-forge ingest <url>` 摄入一些感兴趣的内容。
 ```

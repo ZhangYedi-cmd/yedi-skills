@@ -167,17 +167,17 @@ WebFetch <url>                # 二次降级
   1. 检查 40-Atoms/ 是否已有同名或语义相同的笔记
      - 已有 → 考虑更新已有笔记（追加来源、补充描述）
      - 没有 → 创建新 Atom Note
-  2. 文件名: {concept-name}.md（英文 kebab-case）
-  3. 正文: 用自己的话重述，≤ 300 字
-  4. 添加 source link: 回链到 source note
+  2. 文件名: 优先使用能直观表意的名称（允许中英混合，如 Context-Engineering-上下文工程.md）
+  3. 正文: 用自己的话重述，≤ 500 字
+  4. 添加 sources link: 回链到 source note
   5. 添加 tags: 用 concept/ 前缀
 ```
 
 **完成条件**:
-- 每个 Atom ≤ 300 字
+- 每个 Atom ≤ 500 字
 - 有明确的单一概念
-- 有 `source` 回链
-- 脱离 source note 可独立理解
+- 有 `sources` 回链
+- 有足够上下文供 query 调用时能给出有意义的答案
 
 ---
 
@@ -217,22 +217,27 @@ IF 新 Atom 的观点与已有 Atom 矛盾:
 
 ### 5.3 索引更新
 
-更新 `_index/processed-urls.json`:
+更新 `_index/processed-urls.json`（新条目追加到 `urls` 数组末尾，不按批次分组）:
 
 ```json
 {
-  "urls": {
-    "<url>": {
-      "ingested": "2026-03-01",
-      "note": "00-Inbox/{platform}-{date}-{slug}.md",
+  "version": "1.0",
+  "urls": [
+    {
+      "url": "https://...",
+      "platform": "web",
+      "captured_at": "2026-03-01",
+      "source_note": "00-Inbox/web-2026-03-01-slug.md",
       "atoms": [
         "40-Atoms/concept-a.md",
         "40-Atoms/concept-b.md"
       ]
     }
-  }
+  ]
 }
 ```
+
+> 注：现有历史数据不迁移，仅新条目遵循此 schema。
 
 ---
 
@@ -242,8 +247,8 @@ IF 新 Atom 的观点与已有 Atom 矛盾:
 - [ ] `## Summary` 非空，3-5 句话，≤ 200 字
 - [ ] `## Key Points` 列出 2-5 个要点
 - [ ] `40-Atoms/` 下生成了 1-5 个 atom notes
-- [ ] 每个 atom 有 `source` 回链、`tags`、`## Related`
-- [ ] `_index/processed-urls.json` 已更新
+- [ ] 每个 atom 有 `sources` 回链、`tags`、`## Related`，≤ 500 字
+- [ ] `_index/processed-urls.json` 已更新（新条目追加到 urls 数组末尾）
 - [ ] 重复摄入同一 URL 会跳过
 
 ## 输出示例

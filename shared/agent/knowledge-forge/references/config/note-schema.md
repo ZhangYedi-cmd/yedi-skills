@@ -81,37 +81,36 @@ aliases:
 ## Type 2: Atom Note
 
 **存储位置**: `40-Atoms/`
-**命名**: `{concept-name}.md`（英文 kebab-case）
+**命名**: `{concept-name}.md`（优先使用能直观表意的名称，允许中英混合，如 `Context-Engineering-上下文工程.md`）
 **用途**: 一个独立概念的知识单元（Zettelkasten 风格）
 
 ### Frontmatter Schema
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `type` | Text | 是 | 固定值 `atom` |
 | `title` | Text | 是 | 概念名称 |
 | `created` | Date | 是 | 创建日期 |
 | `updated` | Date | 否 | 最后更新日期（多 source 补充时） |
 | `tags` | List | 是 | 概念标签（用 `concept/` 前缀） |
-| `source` | Links | 是 | 来源笔记的 wikilink |
-| `status` | Text | 是 | `active` / `archived` / `conflict` |
+| `sources` | Links | 是 | 来源笔记的 wikilink（支持多来源） |
+| `language` | Text | 是 | `en` / `zh` |
 
 ### 正文结构
 
 ```markdown
 ---
-type: atom
 title: "Model Context Protocol"
 created: 2026-03-01
 tags:
   - concept/AI
   - concept/protocol
   - concept/tool-use
-source: "[[web-2026-03-01-mcp-protocol-announcement]]"
-status: active
+sources:
+  - "[[web-2026-03-01-mcp-protocol-announcement]]"
+language: en
 ---
 
-[用自己的话重述概念，≤ 300 字。脱离 source note 可独立理解]
+[用自己的话重述概念，≤ 500 字。有足够上下文供 query 调用时能给出有意义的答案]
 
 Model Context Protocol (MCP) is an open standard by Anthropic that defines how LLMs
 communicate with external tools. It uses a client-server architecture where the LLM
@@ -128,12 +127,12 @@ enabling a shared ecosystem of reusable tool servers.
 
 ### Atom 质量检查清单
 
-- [ ] ≤ 300 字
+- [ ] ≤ 500 字
 - [ ] 一个笔记只讲一个概念
 - [ ] 用自己的话重述，不照搬原文
-- [ ] 有 `source` 链接回 source note
+- [ ] 有 `sources` 链接回 source note
 - [ ] 有 `## Related` 部分，至少 1 个 [[wikilink]]
-- [ ] 脱离 source note 可独立理解
+- [ ] 有足够上下文供 query 调用时能给出有意义的答案
 
 ---
 
@@ -196,6 +195,12 @@ tags:
 - [[json-rpc]] — MCP 底层使用的通信协议
 - [[agent-memory]] — Agent 长期记忆的实现方式
 - [[tool-server]] — MCP 中暴露工具的服务端组件
+
+## 下一步建议
+
+1. **立即可做**：[来自今日内容的零成本可试动作]
+2. **值得跟进**：[需要花 30 分钟以上的事项]
+3. **待观察**：[不需要行动，但值得持续关注的信号]
 ```
 
 ---
@@ -259,6 +264,12 @@ tags:
 1. [[source-note-1]] — 推荐理由
 2. [[source-note-2]] — 推荐理由
 3. [[source-note-3]] — 推荐理由
+
+## 下一步建议
+
+1. **立即可做**：[来自本周内容的零成本可试动作]
+2. **值得跟进**：[需要花 30 分钟以上的事项]
+3. **待观察**：[不需要行动，但值得持续关注的信号]
 ```
 
 ---
