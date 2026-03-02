@@ -26,7 +26,7 @@ description: >
 |--------|-------------|---------|
 | `--variant <v>` | 图鉴子变体 | 自动推断 |
 | `--orientation <o>` | portrait / landscape | portrait |
-| `--pages <n>` | 系列图片数量 (2-18) | 列表型=1+N, 其他自动推断 |
+| `--pages <n>` | 系列图片数量 (2-8) | 自动推断 |
 | `--model <m>` | gemini / gpt / nano-banana | 按可用性选择 |
 
 ## 核心设计：Variant × Layout
@@ -54,19 +54,7 @@ description: >
 
 ### Layout Gallery
 
-**封面 Cover（6种原型，根据内容自动选择 ⚠️ 禁止全用同一种）：**
-
-| 代号 | 名称 | 适用 |
-|------|------|------|
-| cover-A | 物品环绕型 | N种品种/物品 + 有容器概念（饺子→蒸笼） |
-| cover-B | 多人群像型 | N个人物/角色/规则（八大天规） |
-| cover-C | 标本解剖型 | 单品深度解析（君子兰、某种食材） |
-| cover-D | 流程变换型 | 步骤/变化/对比（化妆步骤、翻新） |
-| cover-E | 分区分类型 | 按维度分类的选择指南（选狗） |
-| cover-F | 场景多格型 | 多主题合集/系列预览（四大系列） |
-
-**内容页 Content（一页一主题 ⭐ 默认策略）：**
-single-subject-plate, annotated, knowledge-split, grid-surround, fusion-plate, sequential
+**竖版 Portrait (9:16 / 3:4)**：center-radial, annotated, grid-surround, fusion-plate, sequential
 
 **横版 Landscape (16:9 / 4:3)**：side-by-side, panoramic, timeline-flow, scene-map, dashboard
 
@@ -74,15 +62,14 @@ single-subject-plate, annotated, knowledge-split, grid-surround, fusion-plate, s
 
 ### Auto Selection
 
-| 内容信号 | Variant | 封面 Cover | 内容页 Layout |
-|----------|---------|-----------|-------------|
-| N种品种/种类/大全 | natural-history | cover-A 物品环绕 | single-subject-plate |
-| N个人物/规则/规律 | anatomy | cover-B 多人群像 | single-subject-plate |
-| 搭配/配什么/绝配 | pairing | cover-A 物品环绕 | single-subject-plate |
-| 混合/融合/对比/VS | fusion | cover-D 流程变换 | fusion-plate |
-| 步骤/流程/过程 | process | cover-D 流程变换 | sequential |
-| 单品深度解析 | anatomy | cover-C 标本解剖 | annotated |
-| 多主题合集预览 | catalog | cover-F 场景多格 | knowledge-split |
+| 内容信号 | Variant | Layout |
+|----------|---------|--------|
+| 品种/种类/分类/大全 | natural-history | center-radial / panoramic |
+| 结构/原理/分析/拆解/行为 | anatomy | annotated / dashboard |
+| 搭配/配什么/绝配/食谱 | pairing | grid-surround |
+| 混合/融合/对比/VS | fusion | fusion-plate / side-by-side |
+| 步骤/流程/过程/怎么做 | process | sequential / timeline-flow |
+| 工具/器具/装备/收藏 | catalog | center-radial / panoramic |
 
 ## 统一视觉 DNA（对标小红书「万物图鉴」账号实际风格）
 
@@ -94,7 +81,7 @@ single-subject-plate, annotated, knowledge-split, grid-surround, fusion-plate, s
 - **主色**：深棕墨 #3A2A1A（线条）、朱砂红 #C0392B（角标、强调）、琥珀 #FFBF00
 - **点缀**：翠绿 #4A7C59（植物/自然高饱和）、深棕 #8B6914
 - **禁用**：霓虹、荧光、纯黑大面积、维多利亚西式边框、冷蓝冷白
-- **文字**：超大黑体主标题 + 英文副标题（·分隔）+ 中文分类说明行，**无伪拉丁学名**
+- **文字**：超大黑体主标题 + 英文副标题（·分隔）+ 中文分类说明行
 - **角标**：红色方块印章（左上+右上），内含2-4字中文（「图鉴」「天规第X」「宝地」等）
 - **装饰**：知识图解叠层（带框知识块、①②③编号、✓✗对比场景）+ 标注线 + 水墨山水边角
 
@@ -102,14 +89,11 @@ single-subject-plate, annotated, knowledge-split, grid-surround, fusion-plate, s
 
 ## Outline Strategies
 
-| 策略 | 名称 | 理念 | 适合 | 页数 |
-|------|------|------|------|------|
-| A | 一页一主题 ⭐ | 列表型首选，每个条目独占一页 | 龙生九子、八大天规、12种饺子馅 | 1+N [+1] |
-| B | 多维度深拆 | 深度优先，按维度拆解 | 单品分析、命理体系 | 1+M+1 |
-| C | 场景叙事 | 趣味优先，场景推进 | 行为过程、搭配指南 | 1+M+1 |
-
-> ⚠️ **列表型内容（"N种…""N大…"）必须使用策略A**，禁止将多个条目合并到同一页
-> （如"上三子/中三子/下三子"会导致每个条目展示空间不足）。
+| 策略 | 名称 | 理念 | 适合 |
+|------|------|------|------|
+| A | 百科全书型 | 广度优先，系统展示 | 品种图鉴、分类百科 |
+| B | 深度解剖型 | 深度优先，多维拆解 | 单品分析、行为图解 |
+| C | 场景叙事型 | 趣味优先，场景串联 | 行为过程、搭配指南 |
 
 ## File Structure
 
@@ -143,12 +127,11 @@ cat ./EXTEND.md 2>/dev/null || cat ~/EXTEND.md 2>/dev/null
 参考：`references/config/preferences-schema.md`
 
 ### Step 1: Analyze Content
-分析：核心对象、信息类型、**内容结构类型**（列表型/维度型/流程型/对比型）、调性。
-⭐ 输出推荐：变体 + **封面版型(cover-A~F)** + 内容页版型 + 页数。
+分析：核心对象、信息类型、深度、调性、幽默潜力。输出推荐变体+构图+页数。
 参考：`references/workflows/analysis-framework.md`
 
 ### Step 2: Confirmation 1 ⚠️
-用 AskUserQuestion 确认：变体 / **封面版型** / 方向(竖/横) / 规模
+用 AskUserQuestion 确认：变体 / 方向(竖/横) / 规模(3/4-5/6-8张)
 
 ### Step 3: Generate 3 Outlines
 每套含 YAML front matter + 逐页规划。A=广度 B=深度 C=趣味。
@@ -169,16 +152,16 @@ Prompt 结构：`[风格基底] + [变体特征] + [构图模板] + [内容] + [
 ## Series Design Principles
 
 每张图追求**高信息密度**：
-- 一个主体 + 4-12 个标注点
+- 一个主体 + 6-12 个标注点
 - 2-4 个知识框（带边框的文字区块）
 - 1-3 个场景小图或工具图解
-- 底部金句框/总结框
+- 底部总结框/金句框
 
 | 位置 | 密度 | 要求 |
 |------|------|------|
-| 封面 | 最高 | 大标题+角标印章+多元素自然排布+英文副标题 |
-| 内容页 | 高 | ⭐ 每页聚焦一个主题/条目，深度展开所有知识块 |
-| 结尾页 | 中高 | 数据面板/金句/总览/速查表 |
+| 封面 | 最高 | 大标题+角标印章+主体+多标注 |
+| 内容页 | 高 | 每页一维度，深度展开细节 |
+| 结尾页 | 中高 | 数据面板/金句/总览 |
 
 ## Variant × Layout Compatibility
 
