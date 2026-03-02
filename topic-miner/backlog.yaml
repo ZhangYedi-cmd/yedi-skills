@@ -1,0 +1,192 @@
+topics:
+- id: research-xx-001
+  title: 玄学四大流派关系图鉴
+  alt_titles:
+  - 八字、紫微、六爻、奇门到底啥关系？
+  - 一图看懂主流命理体系
+  pillar: P1_传统智慧
+  bucket: B4_对比
+  variant: fusion
+  layout: side-by-side
+  source: gap_driven
+  gap_evidence:
+    search_demand: high
+    supply_density: low
+    top_competitor_likes: 0
+    gap_type: 蓝海
+  stepps:
+    S: 5
+    T: 4
+    E: 4
+    P_pub: 4
+    P_prac: 4
+    S_story: 4
+  score: 4.25
+  tier: Hero
+  status: idea
+  reasoning: 需求高且缺少结构化对比内容，社交货币和实用价值都高。
+  created: '2026-03-01'
+- id: research-xx-002
+  title: 塔罗新手最常犯的九大误区
+  alt_titles:
+  - 别再乱抽牌：塔罗避坑九条
+  - 90%塔罗新手都踩过这些坑
+  pillar: P4_生活指南
+  bucket: B5_流程
+  variant: process
+  layout: sequential
+  source: gap_driven
+  gap_evidence:
+    search_demand: high
+    supply_density: low
+    top_competitor_likes: 0
+    gap_type: 蓝海
+  stepps:
+    S: 4
+    T: 4
+    E: 4
+    P_pub: 4
+    P_prac: 5
+    S_story: 3
+  score: 4.1
+  tier: Hero
+  status: idea
+  reasoning: “误区+数字”结构稳定，强实用、强收藏。
+  created: '2026-03-01'
+- id: research-xx-003
+  title: 2026开运行动月历（12个月版）
+  alt_titles:
+  - 每月做一件小事，全年能量稳住
+  - 开运不是玄：12个月执行清单
+  pillar: P4_生活指南
+  bucket: B5_流程
+  variant: process
+  layout: timeline-flow
+  source: gap_driven
+  gap_evidence:
+    search_demand: high
+    supply_density: low
+    top_competitor_likes: 0
+    gap_type: 蓝海
+  stepps:
+    S: 4
+    T: 5
+    E: 4
+    P_pub: 4
+    P_prac: 5
+    S_story: 3
+  score: 4.3
+  tier: Hero
+  status: idea
+  reasoning: 时间触发频率高，复访和收藏潜力大。
+  created: '2026-03-01'
+- id: research-xx-004
+  title: 家居风水避坑十条图鉴
+  alt_titles:
+  - 不花钱先改这10个风水细节
+  - 最容易被忽略的家居风水雷区
+  pillar: P4_生活指南
+  bucket: B3_排行
+  variant: catalog
+  layout: center-radial
+  source: gap_driven
+  gap_evidence:
+    search_demand: high
+    supply_density: mid
+    top_competitor_likes: 600
+    gap_type: 机会
+  stepps:
+    S: 4
+    T: 5
+    E: 4
+    P_pub: 4
+    P_prac: 5
+    S_story: 2
+  score: 4.05
+  tier: Hero
+  status: idea
+  reasoning: 家居场景强触发，行动可执行。
+  created: '2026-03-01'
+- id: research-xx-005
+  title: 命理术语白话辞典（入门版）
+  alt_titles:
+  - 新手看懂八字/紫微必备词典
+  - 玄学黑话翻译成大白话
+  pillar: P1_传统智慧
+  bucket: B1_大全
+  variant: catalog
+  layout: panoramic
+  source: gap_driven
+  gap_evidence:
+    search_demand: mid
+    supply_density: low
+    top_competitor_likes: 0
+    gap_type: 蓝海
+  stepps:
+    S: 4
+    T: 3
+    E: 3
+    P_pub: 3
+    P_prac: 5
+    S_story: 3
+  score: 3.95
+  tier: Hub
+  status: idea
+  reasoning: 降低门槛，适合系列化长期更新。
+  created: '2026-03-01'
+- id: research-xx-006
+  title: 玄学骗局识别清单：这八句最危险
+  alt_titles:
+  - 一听就要警惕的玄学话术
+  - 被PUA前先看这份避坑表
+  pillar: P5_趣味百科
+  bucket: B3_排行
+  variant: anatomy
+  layout: annotated
+  source: gap_driven
+  gap_evidence:
+    search_demand: high
+    supply_density: mid
+    top_competitor_likes: 500
+    gap_type: 机会
+  stepps:
+    S: 5
+    T: 4
+    E: 5
+    P_pub: 4
+    P_prac: 4
+    S_story: 3
+  score: 4.0
+  tier: Hero
+  status: idea
+  reasoning: 情绪唤醒高，讨论和转发潜力强。
+  created: '2026-03-01'
+- id: research-xx-007
+  title: 星座运势标题公式图解
+  alt_titles:
+  - 为什么“月运”总能爆？
+  - 拆解运势号最常用的5种标题
+  pillar: P5_趣味百科
+  bucket: B2_解剖
+  variant: anatomy
+  layout: annotated
+  source: gap_driven
+  gap_evidence:
+    search_demand: mid
+    supply_density: low
+    top_competitor_likes: 0
+    gap_type: 蓝海
+  stepps:
+    S: 4
+    T: 3
+    E: 3
+    P_pub: 4
+    P_prac: 4
+    S_story: 3
+  score: 3.8
+  tier: Hub
+  status: idea
+  reasoning: 面向内容创作者，社交货币+方法论。
+  created: '2026-03-01'
+version: '1.0'
+generated: '2026-03-01'
