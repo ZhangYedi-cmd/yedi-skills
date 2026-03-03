@@ -62,8 +62,6 @@ Fine detailed botanical linework with watercolor fills.
 
 | 风格变体 | 适配调整 |
 |---------|---------|
-| **cartoon-infographic** | 主体→Q版角色，每个有专属主题色；环绕排列加入成就徽章和漫画条；背景更亮更鲜艳；信息密度提升至 EXTREME |
-| **celestial-narrative** | 主体→仙人/神圣形象，飘逸彩色长袍；金光粒子环绕；背景为天界渐变色而非宣纸；光效为 divine-golden |
 | **realistic-portrait** | 主体→高写实度动植物，细腻纹理毛发；自然侧光+柔和阴影；标注线+品种信息卡；背景保持暖中性色 |
 | **traditional-encyclopedia** | 默认风格，无需调整。使用原始 Prompt 片段 |
 

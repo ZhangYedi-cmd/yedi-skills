@@ -50,61 +50,6 @@
 | 特征柱状图 | `hand-drawn horizontal bar chart for trait comparison` |
 | 规则/要义列表 | `bulleted knowledge list: 不轻进退、不轻许诺... in neat rows` |
 
-## 高互动信息模块（High-Engagement Info Modules）v2.0
-
-博主最高互动内容（12星座系列等）使用的信息呈现模块。
-主要用于 **cartoon-infographic** 风格，大幅提升信息密度和视觉多样性。
-
-### No.1 成就徽章栏（Achievement Badge Column）
-| 元素 | 说明 | Prompt 关键词 |
-|------|------|--------------|
-| 徽章列 | 4个纵向堆叠的成就徽章，每个含🏅奖牌图标 + Q版小角色插画 + 对话气泡说明 | `vertical column of 4 achievement badges on LEFT side, each with medal icon, small chibi character illustration performing the achievement, and speech bubble with humorous caption` |
-| 位置 | 左栏，占30%宽度，贯穿内容区全高 | |
-
-### 行为模式连环画（Behavior Pattern Comic Strip）
-| 元素 | 说明 | Prompt 关键词 |
-|------|------|--------------|
-| 漫画条 | 4-6格连续漫画面板，每格展示一个行为场景，Q版角色+表情+反应文字 | `4-6 panel vertical comic strip on RIGHT side showing sequential behavior patterns, chibi characters with expressive reactions, speech bubbles, emoji-like expressions` |
-| 位置 | 右栏，占30%宽度 | |
-
-### 性格雷达图（Personality Radar Chart）
-| 元素 | 说明 | Prompt 关键词 |
-|------|------|--------------|
-| 雷达图 | 六边形蛛网雷达图，6个性格轴，用主题色填充，手绘风格 | `hexagonal radar/spider chart with 6 labeled personality axes, filled area in [theme color], hand-drawn illustration style, labeled dimensions` |
-| 位置 | 底部左侧象限 | |
-
-### 性格矛盾体（Surface vs Inner Self Panel）
-| 元素 | 说明 | Prompt 关键词 |
-|------|------|--------------|
-| 对比面板 | 分裂面板："表面"（沉稳表情）vs "内心"（对比表情），双Q版对比 | `split contrast panel: left "表面/surface" with composed chibi expression, right "内心/inner self" with contrasting emotional chibi, arrow between them` |
-| 位置 | 雷达图下方 | |
-
-### 成长四格插画（Growth 4-Panel Comic）
-| 元素 | 说明 | Prompt 关键词 |
-|------|------|--------------|
-| 四格漫画 | 4个连续面板展示角色成长/发展阶段，每格有阶段标签 | `4-panel horizontal growth sequence comic: showing character evolution through stages, each panel labeled with stage name, chibi style` |
-| 位置 | 底部居中 | |
-
-### 性格标签云（Trait Tag Cloud）
-| 元素 | 说明 | Prompt 关键词 |
-|------|------|--------------|
-| 标签云 | 散布的性格特征文字标签，大小不一（越大=越突出），主题色渐变 | `personality trait tag cloud with varying text sizes, larger words for dominant traits, scattered arrangement, [theme color] gradient coloring, 「」brackets on key terms` |
-| 位置 | 底部右侧 | |
-
-### 幽默金句框（Humor Quote Box）
-| 元素 | 说明 | Prompt 关键词 |
-|------|------|--------------|
-| 金句框 | 装饰性边框内含幽默/犀利/扎心语录，常配小Q版反应插画 | `decorative bordered humor quote box with witty relatable text, small chibi reaction illustration beside the quote, warm background fill` |
-| 位置 | 底部右下，标签云下方 | |
-
-### 高光时刻图（Highlight Moments）
-| 元素 | 说明 | Prompt 关键词 |
-|------|------|--------------|
-| 时刻列表 | 3-5个关键时刻，每个有箭头→ + 简短描述，排列成纵向列表 | `vertical list of 3-5 highlight moments, each with arrow → and brief description, notable achievements or iconic behaviors` |
-| 位置 | 右侧中下区域，漫画条下方 | |
-
----
-
 ## 中式边框与装饰（替代 Victorian border）
 | 元素 | Prompt 关键词 |
 |------|--------------|
@@ -139,7 +84,5 @@
 - anatomy-atlas: 标注线 + 放大圆 + 剖面图解 + 高饱和植物/自然色
 
 ### 按风格变体（v2.0 新增）
-- **cartoon-infographic**: 成就徽章栏(左) + 行为漫画条(右) + 雷达图(左下) + 矛盾体(左下) + 成长四格(中下) + 标签云(右下) + 幽默金句(右下) + 高光时刻(右中)
-- **celestial-narrative**: 知识框 + 标注线 + 智慧金句框 + 叙事场景小图 + 神圣光效粒子 + 云海装饰
 - **realistic-portrait**: 标注线 + 品种信息卡 + 对比表 + 详细标签系统 + 自然环境边角
 - **traditional-encyclopedia**: 使用上方按构图的默认装饰

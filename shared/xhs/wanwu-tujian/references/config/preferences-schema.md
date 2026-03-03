@@ -17,8 +17,8 @@ watermark:
   position: bottom-right  # bottom-right|bottom-left|bottom-center|top-right
   opacity: 0.7
 
-preferred_style: auto     # cartoon-infographic|celestial-narrative|realistic-portrait|traditional-encyclopedia|auto
-color_energy: auto         # RADIANT|VIBRANT|WARM|auto (auto=按风格默认)
+preferred_style: auto     # realistic-portrait|traditional-encyclopedia|auto
+color_energy: auto         # VIBRANT|WARM|auto (auto=按风格默认)
 enable_light_effects: true # true|false — 是否启用光效描述
 
 preferred_composition:
@@ -76,8 +76,6 @@ style_tweaks:
 | 值 | 说明 | 色彩能量 |
 |----|------|---------|
 | `auto` | 根据内容信号自动推荐最优风格 | 自动 |
-| `cartoon-infographic` | 卡通信息图 — 星座/MBTI/性格分析（互动量最高） | RADIANT |
-| `celestial-narrative` | 仙侠叙事 — 福报/功德/天规/佛道智慧 | VIBRANT |
 | `realistic-portrait` | 写实群像 — 犬种/猫种/动植物写实 | VIBRANT |
 | `traditional-encyclopedia` | 传统百科 — 通用知识百科（默认） | WARM |
 

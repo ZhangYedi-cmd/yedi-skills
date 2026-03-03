@@ -93,13 +93,13 @@
 
 | 内容信号词 | 推荐风格 | 色彩能量 | 备选风格 |
 |-----------|---------|---------|---------|
-| 星座/MBTI/性格/人格类型/XX座 | cartoon-infographic | RADIANT | traditional-encyclopedia |
-| 福报/功德/因果/修行/天规/佛道 | celestial-narrative | VIBRANT | traditional-encyclopedia |
+| 星座/MBTI/性格/人格类型/XX座 | traditional-encyclopedia | WARM | realistic-portrait |
+| 福报/功德/因果/修行/天规/佛道 | traditional-encyclopedia | WARM | realistic-portrait |
 | 犬种/猫种/动物品种/花卉鉴赏 | realistic-portrait | VIBRANT | traditional-encyclopedia |
 | 品种/种类/分类/大全/图鉴 | traditional-encyclopedia | WARM | realistic-portrait |
-| 规则/行为/方法/秘诀/X种/X个 | traditional-encyclopedia | WARM | celestial-narrative |
+| 规则/行为/方法/秘诀/X种/X个 | traditional-encyclopedia | WARM | realistic-portrait |
 | 步骤/教程/怎么做/流程/指南 | traditional-encyclopedia | WARM | — |
-| 人生/哲理/道理/准则/十则 | traditional-encyclopedia | WARM | celestial-narrative |
+| 人生/哲理/道理/准则/十则 | traditional-encyclopedia | WARM | realistic-portrait |
 | 合集/国粹/民俗/习俗/文化 | traditional-encyclopedia | WARM | — |
 | 解析/成分/结构/功效/本草 | traditional-encyclopedia | WARM | realistic-portrait |
 
@@ -140,10 +140,9 @@ source_language: zh
 user_language: zh
 recommended_image_count: [N]
 recommended_composition: [构图名]
-recommended_style: [cartoon-infographic / celestial-narrative / realistic-portrait / traditional-encyclopedia]
-color_energy: [RADIANT / VIBRANT / WARM]
-theme_color: [hex, 仅 cartoon-infographic 需要]
-light_effect: [divine-golden / elemental-fire / natural-warm / ink-atmospheric / ...]
+recommended_style: [realistic-portrait / traditional-encyclopedia]
+color_energy: [VIBRANT / WARM]
+light_effect: [natural-warm / ink-atmospheric]
 ---
 
 ## 核心对象
@@ -169,7 +168,7 @@ light_effect: [divine-golden / elemental-fire / natural-warm / ink-atmospheric /
 
 ## 风格推荐
 - **推荐风格**: [variant name] — [理由]
-- **色彩能量**: [RADIANT/VIBRANT/WARM]
+- **色彩能量**: [VIBRANT/WARM]
 - **备选风格**: [variant name]
 
 ## 构图推荐

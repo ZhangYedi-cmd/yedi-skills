@@ -55,8 +55,6 @@ Credit "作者：@知渡" at very bottom.
 
 | 风格变体 | 适配调整 |
 |---------|---------|
-| **cartoon-infographic** | 每格→Q版角色卡片+主题色边框；卡片内加入成就徽章/表情符号；网格线用彩色渐变 |
-| **celestial-narrative** | 每格→仙界场景卡片+金色边框；卡片背景为天界渐变色；分隔线用金色云纹 |
 | **realistic-portrait** | 每格→写实主体特写+品种名称；卡片边框简洁；自然光照统一渲染 |
 | **traditional-encyclopedia** | 默认风格，无需调整。使用原始 Prompt 片段 |
 

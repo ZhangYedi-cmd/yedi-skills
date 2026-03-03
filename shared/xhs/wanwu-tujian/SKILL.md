@@ -3,8 +3,8 @@ name: wanwu-tujian
 description: >
   生成「万物图鉴」风格的小红书系列组图。将任意主题拆解为高信息密度的复古百科插画系列
   （封面+内容页+结尾页），风格完全对标小红书博主「万物图鉴」(@知渡)。固定视觉DNA
-  （仿古宣纸底色、工笔博物画风、红色方印角标、「」标题系统），内置 4 种风格变体 ×
-  6 种构图模式 × 11 种版面。当用户提到"万物图鉴"、"复古图鉴"、"图鉴风格"、"百科风插画"、
+  （仿古宣纸底色、工笔博物画风、红色方印角标、「」标题系统），内置 2 种风格变体 ×
+  6 种构图模式 × 12 种版面。当用户提到"万物图鉴"、"复古图鉴"、"图鉴风格"、"百科风插画"、
   "科普图鉴"、"古风知识图"、"encyclopedia illustration"时使用此技能。
   即使用户只说"帮我做一组关于XX的科普图片"，只要主题适合图鉴式展示，也应考虑使用。
 ---
@@ -18,7 +18,6 @@ description: >
 
 ```bash
 /wanwu-tujian 积累福报的六种行为
-/wanwu-tujian 十二星座性格图鉴 --style cartoon-infographic
 /wanwu-tujian 中华田园猫品种大全 --style realistic-portrait --composition group-portrait
 /wanwu-tujian 正确去黑头的五个步骤 --pages 5 --model gemini
 ```
@@ -39,16 +38,14 @@ description: >
 
 | 维度 | 控制内容 | 选项 |
 |------|----------|------|
-| **Style** | 插画风格+色彩能量+光效 | 4 种风格变体 |
+| **Style** | 插画风格+色彩能量+光效 | 2 种风格变体 |
 | **Composition** | 信息组织方式 | 6 种构图模式 |
-| **Layout** | 画面空间排列 | 6 竖版 + 5 横版 |
+| **Layout** | 画面空间排列 | 7 竖版 + 5 横版 |
 
-## Style Gallery（4 种风格变体）
+## Style Gallery（2 种风格变体）
 
 | Style Variant | 中文名 | 色彩能量 | 互动量 | 适用 |
 |---------------|--------|---------|--------|------|
-| `cartoon-infographic` | 卡通信息图 | RADIANT (最高饱和) | ⭐⭐⭐⭐⭐ 最高 | 星座/MBTI/性格分析 |
-| `celestial-narrative` | 仙侠叙事 | VIBRANT (高饱和) | ⭐⭐⭐⭐ | 福报/功德/天规/佛道 |
 | `realistic-portrait` | 写实群像 | VIBRANT (高饱和) | ⭐⭐⭐⭐ | 犬种/猫种/动植物 |
 | `traditional-encyclopedia` | 传统百科 | WARM (暖色对比) | ⭐⭐⭐⭐ | 通用百科/教程（默认） |
 
@@ -65,8 +62,6 @@ description: >
 - **Module 2 一致性**：同系列选定一个 Style Variant，所有图逐字一致
 
 **按风格变体差异**（详见 `elements/illustration-styles.md`）：
-- **cartoon-infographic**: Q版角色+主题色光环+成就徽章+漫画条+雷达图（RADIANT 最高饱和）
-- **celestial-narrative**: 仙人长袍+金光粒子+天界渐变+云海（VIBRANT 高饱和）
 - **realistic-portrait**: 写实纹理+自然侧光+品种信息卡（VIBRANT 高饱和）
 - **traditional-encyclopedia**: 宣纸底+工笔水彩+知识图解叠层（WARM 暖色对比）
 
@@ -88,7 +83,7 @@ description: >
 
 ## Layout Gallery
 
-**竖版 Portrait (1792×2400 / 3:4)**：center-radial, annotated, grid-surround, fusion-plate, sequential, knowledge-split
+**竖版 Portrait (1792×2400 / 3:4)**：center-radial, annotated, grid-surround, fusion-plate, sequential, knowledge-split, tri-panel
 
 **横版 Landscape (16:9 / 4:3)**：side-by-side, panoramic, timeline-flow, scene-map, dashboard
 
@@ -98,15 +93,15 @@ description: >
 
 | 内容信号 | Style | Composition | Layout |
 |----------|-------|-------------|--------|
-| 星座/MBTI/性格/人格类型 | cartoon-infographic | group-portrait / center-radial | center-radial / annotated |
-| 福报/功德/因果/修行/天规/佛道 | celestial-narrative | center-radial / scattered-icons | annotated / knowledge-split |
-| 犬种/猫种/动物品种/花卉鉴赏 | realistic-portrait | group-portrait / anatomy-atlas | center-radial / annotated |
+| 星座/MBTI/性格/人格类型 | traditional-encyclopedia | group-portrait / center-radial | center-radial / annotated |
+| 福报/功德/因果/修行/天规/佛道 | traditional-encyclopedia | center-radial / scattered-icons | annotated / knowledge-split |
+| 犬种/猫种/动物品种/花卉鉴赏 | realistic-portrait | group-portrait / anatomy-atlas | center-radial / tri-panel |
 | 品种/种类/分类/大全/图鉴 | traditional-encyclopedia | group-portrait | center-radial / panoramic |
 | 规则/行为/方法/秘诀/X种/X个 | traditional-encyclopedia | center-radial | annotated / knowledge-split |
 | 步骤/教程/怎么做/流程/指南 | traditional-encyclopedia | infographic | sequential / timeline-flow |
 | 人生/哲理/道理/准则/十则 | traditional-encyclopedia | scattered-icons | center-radial / annotated |
 | 合集/国粹/民俗/习俗/文化 | traditional-encyclopedia | grid-collage | grid-surround / panoramic |
-| 解析/成分/结构/功效/本草 | traditional-encyclopedia | anatomy-atlas | annotated / dashboard |
+| 解析/成分/结构/功效/本草 | traditional-encyclopedia | anatomy-atlas | tri-panel / annotated |
 
 ## Outline Strategies
 
@@ -228,7 +223,7 @@ Schema: `references/config/preferences-schema.md`
 - 推荐构图 + 理由
 
 **使用 AskUserQuestion**:
-1. **风格变体**（展示推荐 + 备选）：cartoon-infographic / celestial-narrative / realistic-portrait / traditional-encyclopedia
+1. **风格变体**（展示推荐 + 备选）：realistic-portrait / traditional-encyclopedia
 2. 构图模式（展示推荐 + 备选）
 3. 方向：竖版(Recommended) / 横版
 4. 规模：3张精简 / 4-5张标准(Recommended) / 6-8张完整
@@ -340,7 +335,7 @@ Reference: `references/config/watermark-guide.md`
 主题: [topic]
 策略: [A/B/C/Combined]
 风格: [style variant name]
-色彩能量: [RADIANT/VIBRANT/WARM]
+色彩能量: [VIBRANT/WARM]
 构图: [composition name]
 版面: [layout name or "varies"]
 路径: [directory path]
@@ -361,14 +356,14 @@ Reference: `references/config/watermark-guide.md`
 
 ## Composition × Layout Compatibility
 
-| | center-radial | annotated | grid-surround | fusion-plate | sequential | knowledge-split | side-by-side | panoramic | timeline-flow | scene-map | dashboard |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| group-portrait | ✓✓ | ✓ | ✓✓ | — | — | ✓ | ✓ | ✓✓ | — | — | ✓ |
-| center-radial | ✓✓ | ✓✓ | — | — | ✓ | ✓✓ | ✓ | — | — | — | ✓✓ |
-| infographic | — | ✓ | — | — | ✓✓ | ✓ | — | — | ✓✓ | — | — |
-| scattered-icons | ✓✓ | ✓ | ✓ | — | — | — | — | — | — | ✓✓ | — |
-| grid-collage | ✓ | — | ✓✓ | — | — | — | — | ✓✓ | — | ✓ | — |
-| anatomy-atlas | ✓ | ✓✓ | — | ✓ | — | ✓✓ | ✓✓ | — | — | — | ✓✓ |
+| | center-radial | annotated | grid-surround | fusion-plate | sequential | knowledge-split | tri-panel | side-by-side | panoramic | timeline-flow | scene-map | dashboard |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| group-portrait | ✓✓ | ✓ | ✓✓ | — | — | ✓ | ✓ | ✓ | ✓✓ | — | — | ✓ |
+| center-radial | ✓✓ | ✓✓ | — | — | ✓ | ✓✓ | — | ✓ | — | — | — | ✓✓ |
+| infographic | — | ✓ | — | — | ✓✓ | ✓ | — | — | — | ✓✓ | — | — |
+| scattered-icons | ✓✓ | ✓ | ✓ | — | — | — | — | — | — | — | ✓✓ | — |
+| grid-collage | ✓ | — | ✓✓ | — | — | — | — | — | ✓✓ | — | ✓ | — |
+| anatomy-atlas | ✓ | ✓✓ | — | ✓ | — | ✓✓ | ✓✓ | ✓✓ | — | — | — | ✓✓ |
 
 ## Image Modification
 
@@ -395,7 +390,7 @@ Reference: `references/config/watermark-guide.md`
 ## References
 
 **Elements** (视觉元素):
-- `elements/illustration-styles.md` — 4种风格变体定义（v2.0核心）
+- `elements/illustration-styles.md` — 2种风格变体定义（v2.0核心）
 - `elements/canvas.md` — 画布规格、安全区、按风格信息密度
 - `elements/color-palettes.md` — 主题色系统、色彩能量、光效、按风格色彩模板
 - `elements/typography.md` — 印章+双语标题系统
@@ -410,7 +405,7 @@ Reference: `references/config/watermark-guide.md`
 - `compositions/anatomy-atlas.md` — 博物解剖式
 
 **Layouts** (版面):
-- `layouts/portrait-layouts.md` — 6种竖版
+- `layouts/portrait-layouts.md` — 7种竖版
 - `layouts/landscape-layouts.md` — 5种横版
 
 **Workflows** (工作流):
@@ -430,7 +425,6 @@ Reference: `references/config/watermark-guide.md`
 - **两个确认点必须执行**（Steps 2 & 4）— 不可跳过
 - 所有图 Module 2（Style Base Variant）逐字一致
 - Module 7/8 必须与选定的 Style Variant 匹配
-- cartoon-infographic 的 [THEME_COLOR] 和 [LIGHT_TYPE] 占位符必须在生成前替换
 
 ## Extension Support
 

@@ -23,65 +23,16 @@ Style: [STYLE_DESCRIPTION]. Quality: Museum-grade detail.
 
 | Style Variant | STYLE_DESCRIPTION |
 |---------------|-------------------|
-| cartoon-infographic | Vibrant cartoon-infographic with chibi characters and extreme information density |
-| celestial-narrative | Dramatic celestial/xianxia painting with divine golden light effects |
 | realistic-portrait | Detailed semi-realistic portrait with rich textures and natural lighting |
 | traditional-encyclopedia | Chinese traditional encyclopedia illustration with knowledge infographic overlay |
 
-## Module 2: Style Base — 4 Named Variants ⚠️ CRITICAL
+## Module 2: Style Base — 2 Named Variants ⚠️ CRITICAL
 
 > **规则**：同系列选择一个变体，所有图逐字一致。不同系列可使用不同变体。
 > **风格对标：小红书账号「万物图鉴」(@知渡) 的实际发布风格**
 > **详细参考**：`references/elements/illustration-styles.md`
 
-### Variant A: cartoon-infographic（卡通信息图）— 互动量最高
-```
-Visual Style (CRITICAL — WanWuTuJian cartoon-infographic variant):
-- Modern cartoon/chibi illustration blended with traditional Chinese elements
-- Characters: semi-chibi style with expressive cartoon faces, large eyes,
-  exaggerated charming proportions — NOT stiff realistic historical figures
-- Each character has a unique THEME COLOR: [THEME_COLOR] saturating their
-  costume, accessories, and surrounding energy aura at maximum vibrancy
-- Character occupies 35-40% of canvas, vibrant and eye-catching, dynamic pose
-- Light effects: glowing [LIGHT_TYPE] aura around character, particle effects,
-  energy wisps in theme color — the character RADIATES color and energy
-- Background: aged paper texture but BRIGHTER and more LUMINOUS than traditional;
-  paper is secondary to the vibrant character art and colorful info modules
-- Color energy: RADIANT — maximum saturation on characters and info panels,
-  background stays warm but luminous, every element pops with vivid color
-- Information modules: achievement badge columns (LEFT), behavior comic strips
-  (RIGHT), radar charts, tag clouds, growth comics, humor quote boxes —
-  EXTREMELY high information density (15-20 distinct elements per page)
-- Corner stamps: red square Chinese character stamps at top corners
-- Credit: 作者：@知渡
-- NO muted/flat/plain illustration; NO stiff historical realism;
-  NO Western Victorian elements; NO faux-Latin
-```
-
-### Variant B: celestial-narrative（仙侠叙事）
-```
-Visual Style (CRITICAL — WanWuTuJian celestial-narrative variant):
-- Xianxia/celestial-style fine painting with dramatic divine atmosphere
-- Characters: full-body divine/immortal figures in flowing colorful robes,
-  sacred postures, graceful movement — spiritual and majestic quality
-- Robes in rich saturated hues: deep crimson, royal purple, celestial blue,
-  emerald green — flowing and dynamic, NOT flat or stiff
-- Divine golden light: warm amber rays emanating from figures, sacred glow
-  halos, floating golden particles, heavenly atmospheric effects
-- Multiple figures possible, each in distinct colorful flowing robes
-- Background: deep celestial backdrop with golden-amber gradients, layered
-  clouds, heavenly atmosphere — minimal paper texture, DRAMATIC atmosphere
-- Color energy: VIBRANT — rich saturated robes against warm golden atmospheric
-  background; the scene GLOWS with divine warmth
-- Knowledge overlay with traditional boxed panels, but subordinate to the
-  dramatic visual narrative
-- Corner stamps: red square Chinese character stamps at top corners
-- Credit: 作者：@知渡
-- NO flat/muted illustration; NO cartoon/chibi; NO cold tones;
-  NO Western Victorian elements; NO faux-Latin
-```
-
-### Variant C: realistic-portrait（写实群像）
+### Variant A: realistic-portrait（写实群像）
 ```
 Visual Style (CRITICAL — WanWuTuJian realistic-portrait variant):
 - Detailed semi-realistic painting with rich texturing and natural lighting
@@ -103,7 +54,7 @@ Visual Style (CRITICAL — WanWuTuJian realistic-portrait variant):
   NO Western Victorian elements; NO faux-Latin
 ```
 
-### Variant D: traditional-encyclopedia（传统百科）— 升级版默认
+### Variant B: traditional-encyclopedia（传统百科）— 升级版默认
 ```
 Visual Style (CRITICAL — WanWuTuJian traditional-encyclopedia variant):
 - Chinese traditional encyclopedia illustration aesthetic (历史图鉴风格)
@@ -141,15 +92,13 @@ Visual Style (CRITICAL — WanWuTuJian traditional-encyclopedia variant):
 **内容页**：使用该 composition 的「Prompt 片段（内容页）」
 
 > **风格适配**：Composition prompt 片段中如描述"人物"相关特征，需根据当前 Style Variant 调整：
-> - **cartoon-infographic**: 人物→Q版角色，增加信息模块密度描述
-> - **celestial-narrative**: 人物→仙人/神圣形象，增加光效/氛围描述
 > - **realistic-portrait**: 人物→写实主体，增加纹理/细节描述
 > - **traditional-encyclopedia**: 保持原始 composition 描述不变
 
 ## Module 4: Layout
 从 `references/layouts/` 加载对应版面的 prompt 模板。
 
-**竖版**：`layouts/portrait-layouts.md` → center-radial / annotated / grid-surround / fusion-plate / sequential / knowledge-split
+**竖版**：`layouts/portrait-layouts.md` → center-radial / annotated / grid-surround / fusion-plate / sequential / knowledge-split / tri-panel
 **横版**：`layouts/landscape-layouts.md` → side-by-side / panoramic / timeline-flow / scene-map / dashboard
 
 ## Module 5: Content
@@ -182,35 +131,6 @@ Text (render in image):
 
 > 从 `references/elements/decorations.md` 加载装饰元素。根据 Style Variant 选择对应装饰集。
 
-### cartoon-infographic 装饰（高互动信息模块）
-```
-Decorations:
-- Red square corner stamps at top-left and top-right with Chinese characters
-- Achievement badge column on LEFT side (4 badges with medal icons, chibi illustrations, speech bubbles)
-- Behavior pattern comic strip on RIGHT side (4-6 panels with sequential scenes, chibi reactions)
-- Hexagonal personality radar chart (6 axes, filled in theme color, hand-drawn style)
-- Surface vs Inner Self contrast panel (split: composed expression vs contrasting emotion)
-- Growth 4-panel comic sequence (character evolution through labeled stages)
-- Personality trait tag cloud (varying text sizes, theme color gradient, 「」brackets)
-- Humor quote box with decorative border and small chibi reaction illustration
-- Highlight moments list (3-5 items with arrow → markers)
-- Background: bright aged paper, secondary to vibrant info modules
-```
-
-### celestial-narrative 装饰
-```
-Decorations:
-- Red square corner stamps at top-left and top-right with Chinese characters
-- Thin-bordered knowledge boxes with warm golden border lines
-- Annotation lines with Chinese labels
-- Wisdom quote box with ornate golden frame
-- Narrative scene vignettes showing key moments
-- Divine golden light particle effects throughout
-- Layered cloud sea decorations at edges and corners
-- Sacred halo glow effects around key elements
-- Floating golden particles as ambient decoration
-```
-
 ### realistic-portrait 装饰
 ```
 Decorations:
@@ -237,22 +157,6 @@ Decorations:
 ```
 
 ## Module 8: Negative — 按风格变体调整
-
-### cartoon-infographic
-```
-AVOID: muted/flat/plain illustration, stiff historical realism, Western Victorian
-ornamental border, faux-Latin scientific names, photorealistic photography,
-3D CGI render, cold blue/white tones, pure black fills, dark background,
-low information density, boring static layout.
-```
-
-### celestial-narrative
-```
-AVOID: flat/muted illustration, cartoon/chibi style, cold tones, Western Victorian
-ornamental border, faux-Latin scientific names, photorealistic photography,
-3D CGI render, anime/manga style, neon colors, fluorescent, modern minimalist
-design, dark background without golden warmth.
-```
 
 ### realistic-portrait
 ```
@@ -305,7 +209,7 @@ Subtle watermark "[内容]" at [位置], legible but not distracting.
 
 ## Session 一致性
 同系列所有图保持相同的 **Module 2 Style Variant（逐字一致）**、色彩能量级别、角标印章风格、署名。
-- Module 2 选定一个 Variant（A/B/C/D），系列内所有图逐字复制，不可修改
+- Module 2 选定一个 Variant（A/B），系列内所有图逐字复制，不可修改
 - Module 7/8 使用与 Module 2 匹配的风格变体装饰/排除项
 - 每张图的 Module 6 中角标内容可按页面主题变化（如 福报·壹/福报·贰/福报·叁...）
 
@@ -326,9 +230,8 @@ Subtle watermark "[内容]" at [位置], legible but not distracting.
 ## Prompt 检查清单
 
 生成前确认：
-- [ ] 风格变体已确定（cartoon-infographic / celestial-narrative / realistic-portrait / traditional-encyclopedia）
+- [ ] 风格变体已确定（realistic-portrait / traditional-encyclopedia）
 - [ ] Module 2 选用正确的 Variant 且与系列其他图完全一致（逐字）
-- [ ] Module 2 中 [THEME_COLOR]、[LIGHT_TYPE] 占位符已替换（如使用 cartoon-infographic）
 - [ ] Module 7 装饰集与 Module 2 风格变体匹配
 - [ ] Module 8 排除项与 Module 2 风格变体匹配
 - [ ] 构图片段从正确的 composition 文件加载
@@ -337,5 +240,5 @@ Subtle watermark "[内容]" at [位置], legible but not distracting.
 - [ ] 中文文字完整（标题、角标、标注、署名）
 - [ ] 署名为"作者：@知渡"
 - [ ] 水印已包含（如偏好中启用）
-- [ ] 无冲突指令（如 Variant A 的"NOT stiff realism"不与内容描述冲突）
+- [ ] 无冲突指令（如各 Variant 的排除项不与内容描述冲突）
 - [ ] 图2+ 已设置 --ref 指向图1

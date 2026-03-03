@@ -14,9 +14,9 @@
 
 > **关键区别**：博主用的不是西方博物馆羊皮纸调，而是**中国宣纸/旧书纸调**——底色偏米白偏暖，文字用深棕墨（非纯黑），植物/自然图画局部饱和度高（翠绿、深红），但整体背景保持低饱和。
 
-## Theme Color System（主题色系统）v2.0
+## Theme Color System（主题色系统）v2.0（可选，需要为主体分配特定色彩时使用）
 
-用于 cartoon-infographic 和其他需要主题色的风格，每个主题/角色分配一个主色调：
+每个主题/角色分配一个主色调：
 
 | 名称 | Hex | 适用主题 |
 |------|-----|---------|
@@ -39,40 +39,16 @@
 |------|--------|---------|---------|------|---------|
 | ~~MUTED~~ | ~~20-40%~~ | ~~（v1.0 默认，已废弃）~~ | — | 无 | ~~废弃~~ |
 | **WARM** | 40-65% | 经典宣纸底，暖色哑光 | 自然主体用**更饱和**色彩做刻意对比 | 微妙暖光 | traditional-encyclopedia |
-| **VIBRANT** | 60-85% | 淡化纸质感，偏向氛围渲染 | 全面丰富饱和 | 自然光/金光 | celestial-narrative, realistic-portrait |
-| **RADIANT** | 80-100% | 亮化纸底，退居次要 | 最高饱和度，主题色浸染 | 主题色光环+粒子效果 | cartoon-infographic |
+| **VIBRANT** | 60-85% | 淡化纸质感，偏向氛围渲染 | 全面丰富饱和 | 自然光/金光 | realistic-portrait |
 
 ## Light Effect Descriptions（光效描述库）
 
 | 光效类型 | Prompt 片段 |
 |---------|------------|
-| divine-golden | `divine golden light rays emanating from figures, warm amber atmospheric glow, floating golden particles, sacred halo effect` |
-| elemental-fire | `fiery orange-red aura surrounding character, flame-like energy wisps, warm ember particles, dynamic fire effects` |
-| elemental-ice | `cool ice-blue crystalline aura, frost particle effects, pale blue ambient glow, ice crystal formations` |
-| elemental-star | `starlight sparkle effects, cosmic purple-blue nebula wisps, twinkling light points, celestial star trail` |
-| elemental-nature | `natural green energy aura, floating leaf particles, earth-tone warm glow, organic growth effects` |
 | natural-warm | `warm natural side-lighting, soft golden hour quality, gentle highlights on key features` |
 | ink-atmospheric | `subtle ink-wash mist effects at edges, atmospheric depth, faint cloud wisps` |
 
 ## Per-Style Color Templates（按风格的色彩模板）
-
-### cartoon-infographic
-```
-Color energy: RADIANT. Theme color [THEME_COLOR] saturates the central character's
-costume, accessories, and surrounding energy aura at maximum vibrancy. Background
-retains warm paper base (#F0E0C0) but BRIGHTER and more luminous than traditional.
-Info modules and chibi illustrations use bold, saturated colors. Glowing [LIGHT_TYPE]
-aura and particle effects around the main character. Every element pops with color.
-```
-
-### celestial-narrative
-```
-Color energy: VIBRANT. Deep celestial backdrop with golden-amber gradients replacing
-plain paper texture. Flowing robes in rich saturated hues (deep crimson #DC143C,
-royal purple #7B68EE, celestial blue #1E90FF, emerald green #228B22). Divine golden
-light rays (#FFD700 to #FF8C00) emanating from figures. Sacred glow halos. Floating
-golden particles. Warm amber atmospheric fog. Heavenly atmosphere dominates.
-```
 
 ### realistic-portrait
 ```

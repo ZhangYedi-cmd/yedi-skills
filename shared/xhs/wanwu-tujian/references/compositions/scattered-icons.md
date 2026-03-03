@@ -57,8 +57,6 @@ Credit "作者：@知渡" at very bottom.
 
 | 风格变体 | 适配调整 |
 |---------|---------|
-| **cartoon-infographic** | 图标→Q版小角色（每个代表一个概念）；散布区加入性格标签云+矛盾体对比；中央主角色有主题色光环 |
-| **celestial-narrative** | 图标→神圣符号/法器（如莲花、金轮、法杖）；散布在金光云海中；仙气飘渺的有机布局 |
 | **realistic-portrait** | 图标→写实物品/自然元素（如真实莲花、真实书卷）；自然光照渲染每个物品；细腻纹理 |
 | **traditional-encyclopedia** | 默认风格，无需调整。使用原始 Prompt 片段 |
 

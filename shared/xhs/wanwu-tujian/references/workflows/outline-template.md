@@ -82,10 +82,9 @@ NN-{type}-[slug].md (in prompts/)
 ---
 strategy: a  # a, b, or c
 name: 百科全书型
-style: traditional-encyclopedia  # cartoon-infographic / celestial-narrative / realistic-portrait / traditional-encyclopedia
+style: traditional-encyclopedia  # realistic-portrait / traditional-encyclopedia
 style_reason: "规则类内容适合传统百科风格"
-color_energy: WARM  # RADIANT / VIBRANT / WARM
-theme_color: ""  # 仅 cartoon-infographic 需要，如 "#FF4500"
+color_energy: WARM  # VIBRANT / WARM
 light_effect: ink-atmospheric  # 参考 illustration-styles.md 光效描述库
 composition: center-radial  # 推荐构图
 composition_reason: "规则/方法类内容最适合中心辐射式，互动量最高"

@@ -16,7 +16,7 @@
 
 ## Elements 配置
 ```yaml
-layout: annotated | knowledge-split
+layout: annotated | knowledge-split | tri-panel
 annotations: thin-line-labels (6-10), magnified-detail-insets (2-4)
 data_viz: [cross-section-diagram, feature-comparison-table]
 decorations: [red-square-stamps, annotation-lines, circular-detail-frames, ink-wash-corner]
@@ -69,8 +69,6 @@ with lush watercolor fills. Contrast against warm muted paper background.
 
 | 风格变体 | 适配调整 |
 |---------|---------|
-| **cartoon-infographic** | 主体→Q版化的拟人物品；标注线→彩色+有趣标签；加入成就徽章和趣味解说漫画条 |
-| **celestial-narrative** | 主体→神器/仙草/灵物，发光光效；标注线→金色；背景→天界雾气；剖面图→灵气脉络 |
 | **realistic-portrait** | 强化写实：主体细节极致，皮毛/花瓣纹理精细；放大圆展示微观结构；自然光+环境反射 |
 | **traditional-encyclopedia** | 默认风格，无需调整。使用原始 Prompt 片段 |
 

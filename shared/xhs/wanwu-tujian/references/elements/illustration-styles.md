@@ -6,71 +6,9 @@
 
 **核心规则**：同系列所有图使用同一风格变体（Module 2 逐字一致），不同系列可使用不同变体。
 
-## 4 种风格变体
+## 2 种风格变体
 
-### 1. cartoon-infographic（卡通信息图）
-
-> **来源**：12星座系列（互动量最高的内容形式）
-
-| 维度 | 描述 |
-|------|------|
-| **画技** | 现代卡通/Q版插画融合传统中国元素 |
-| **角色风格** | 半Q版，大眼睛，夸张比例，表情丰富可爱；每个角色有专属**主题色**服装和能量光环 |
-| **角色占比** | 35-40% 画面 |
-| **色彩能量** | RADIANT（最高饱和度） |
-| **主题色系统** | 每个主题/角色分配一个主色调，浸染其服装、配饰和周围光效 |
-| **光效** | 与主题色匹配的发光光环（火象=火焰、风象=星光、水象=水波、土象=冰晶/金属） |
-| **背景** | 宣纸底色但比传统百科**更亮**；纸质感退居次要，鲜艳角色和信息模块为主 |
-| **信息密度** | EXTREME（15-20个独立信息元素/页） |
-| **信息模块** | 成就徽章栏、行为漫画条、雷达图、标签云、成长四格、幽默金句、矛盾体对比 |
-| **适用** | 星座/MBTI/性格分析、人格图鉴、角色画像 — 娱乐+信息双重最大化 |
-
-**Prompt 片段**：
-```
-Modern cartoon/chibi illustration blended with traditional Chinese elements.
-Semi-chibi character with expressive cartoon face, large eyes, exaggerated
-proportions for charm. Theme color [THEME_COLOR] saturating costume,
-accessories, and surrounding [LIGHT_TYPE] energy aura. Character occupies
-35-40% of canvas. Glowing aura and particle effects in theme color.
-Background: bright aged paper texture, secondary to vibrant character art.
-Color energy: RADIANT — maximum saturation on characters and info panels.
-Extremely high information density with achievement badges, behavior comic
-strips, radar charts, tag clouds, growth comics, humor quote boxes.
-```
-
----
-
-### 2. celestial-narrative（仙侠叙事）
-
-> **来源**：积累福报系列封面、天规系列封面
-
-| 维度 | 描述 |
-|------|------|
-| **画技** | 仙侠/天界风格精绘，戏剧性光效 |
-| **角色风格** | 全身神仙/仙人形象，飘逸彩色长袍，神圣姿态，优雅动势 |
-| **角色占比** | 40-50% 画面 |
-| **色彩能量** | VIBRANT（高饱和度，暖金色主调） |
-| **光效** | 神圣金光：温暖琥珀光线从人物散发、圣洁光晕、漂浮金色粒子、天界氛围效果 |
-| **背景** | 深邃天界背景（深金/琥珀渐变），层叠云海，天界氛围 — 纸质感极少，戏剧性氛围优先 |
-| **信息密度** | HIGH（10-15元素） — 偏向视觉戏剧性 |
-| **信息模块** | 知识框、标注线、智慧金句框、叙事场景小图 |
-| **适用** | 灵性/佛道智慧、因果/福报/功德、天规/修行、神话传说 |
-
-**Prompt 片段**：
-```
-Xianxia/celestial-style fine painting with dramatic divine atmosphere.
-Full-body divine figures in flowing colorful robes (deep crimson, royal
-purple, celestial blue, emerald green), sacred postures, graceful movement.
-Divine golden light: warm amber rays emanating from figures, sacred glow
-halos, floating golden particles, heavenly atmospheric effects.
-Background: deep celestial backdrop with golden-amber gradients, layered
-clouds — minimal paper texture, DRAMATIC atmosphere prioritized.
-Color energy: VIBRANT — rich saturated robes against warm golden atmosphere.
-```
-
----
-
-### 3. realistic-portrait（写实群像）
+### 1. realistic-portrait（写实群像）
 
 > **来源**：护主狗系列、动植物写实肖像
 
@@ -98,7 +36,7 @@ Color energy: VIBRANT — rich natural colors with full saturation on subjects.
 
 ---
 
-### 4. traditional-encyclopedia（传统百科）— 升级版默认
+### 2. traditional-encyclopedia（传统百科）— 升级版默认
 
 > **来源**：当前默认风格，v2.0 升级色彩活力
 
@@ -132,13 +70,13 @@ text blocks, boxed panels, ✓/✗ comparison icons, numbered ①②③.
 
 | 内容信号词 | 推荐风格 | 色彩能量 | 备选风格 |
 |-----------|---------|---------|---------|
-| 星座/MBTI/性格/人格类型/XX座 | cartoon-infographic | RADIANT | traditional-encyclopedia |
-| 福报/功德/因果/修行/天规/佛道 | celestial-narrative | VIBRANT | traditional-encyclopedia |
+| 星座/MBTI/性格/人格类型/XX座 | traditional-encyclopedia | WARM | traditional-encyclopedia |
+| 福报/功德/因果/修行/天规/佛道 | traditional-encyclopedia | WARM | traditional-encyclopedia |
 | 犬种/猫种/动物品种/花卉鉴赏 | realistic-portrait | VIBRANT | group-portrait (traditional) |
 | 品种/种类/分类/大全/图鉴 | traditional-encyclopedia | WARM | realistic-portrait |
-| 规则/行为/方法/秘诀/X种/X个 | traditional-encyclopedia | WARM | celestial-narrative |
+| 规则/行为/方法/秘诀/X种/X个 | traditional-encyclopedia | WARM | realistic-portrait |
 | 步骤/教程/怎么做/流程/指南 | traditional-encyclopedia | WARM | — |
-| 人生/哲理/道理/准则/十则 | traditional-encyclopedia | WARM | celestial-narrative |
+| 人生/哲理/道理/准则/十则 | traditional-encyclopedia | WARM | realistic-portrait |
 | 合集/国粹/民俗/习俗/文化 | traditional-encyclopedia | WARM | — |
 | 解析/成分/结构/功效/本草 | traditional-encyclopedia | WARM | realistic-portrait |
 
@@ -148,12 +86,11 @@ text blocks, boxed panels, ✓/✗ comparison icons, numbered ①②③.
 |------|------|----------|------|---------|
 | ~~MUTED~~ | ~~（v1.0 默认，已废弃）~~ | ~~20-40%~~ | 无 | ~~废弃~~ |
 | **WARM** | 暖色强调+哑光底色，新默认 | 40-65% | 微妙暖光 | traditional-encyclopedia |
-| **VIBRANT** | 全面丰富饱和色 | 60-85% | 自然光/金光 | celestial-narrative, realistic-portrait |
-| **RADIANT** | 最高饱和度+发光效果 | 80-100% | 主题色光环+粒子 | cartoon-infographic |
+| **VIBRANT** | 全面丰富饱和色 | 60-85% | 自然光/金光 | realistic-portrait |
 
 ## Theme Color Palette（主题色板）
 
-用于 cartoon-infographic 和其他需要主题色的风格：
+主题色为可选项，在需要为特定主题/角色分配专属色调时使用：
 
 | 名称 | Hex | 适用主题 |
 |------|-----|---------|
@@ -174,10 +111,5 @@ text blocks, boxed panels, ✓/✗ comparison icons, numbered ①②③.
 
 | 光效类型 | Prompt 片段 | 适用场景 |
 |---------|------------|---------|
-| divine-golden | `divine golden light rays emanating from figures, warm amber atmospheric glow, floating golden particles, sacred halo effect` | 仙侠/佛道/神圣 |
-| elemental-fire | `fiery orange-red aura surrounding character, flame-like energy wisps, warm ember particles, dynamic fire effects` | 火象/热血/战斗 |
-| elemental-ice | `cool ice-blue crystalline aura, frost particle effects, pale blue ambient glow, ice crystal formations` | 冷静/高冷/水象 |
-| elemental-star | `starlight sparkle effects, cosmic purple-blue nebula wisps, twinkling light points, celestial star trail` | 风象/灵性/神秘 |
-| elemental-nature | `natural green energy aura, floating leaf particles, earth-tone warm glow, organic growth effects` | 土象/自然/稳定 |
 | natural-warm | `warm natural side-lighting, soft golden hour quality, gentle highlights on key features` | 写实/自然光 |
 | ink-atmospheric | `subtle ink-wash mist effects at edges, atmospheric depth, faint cloud wisps` | 传统百科 |

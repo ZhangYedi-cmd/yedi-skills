@@ -51,10 +51,6 @@ question: "默认插画风格偏好？（后续每次生成也会根据内容自
 options:
   - label: "Auto (Recommended)"
     description: "根据内容自动选择最佳风格"
-  - label: "cartoon-infographic"
-    description: "卡通信息图 — Q版角色+高密度信息模块（互动量最高）"
-  - label: "celestial-narrative"
-    description: "仙侠叙事 — 仙人长袍+金光粒子+天界氛围"
   - label: "traditional-encyclopedia"
     description: "传统百科 — 宣纸底+工笔+知识图解（万能默认）"
 ```

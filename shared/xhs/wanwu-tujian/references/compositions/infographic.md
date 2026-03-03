@@ -56,8 +56,6 @@ Credit "作者：@知渡" at very bottom.
 
 | 风格变体 | 适配调整 |
 |---------|---------|
-| **cartoon-infographic** | 步骤角色→Q版，每步配表情反应；连接箭头→彩色动态；材料面板→可爱图标化；加入幽默金句框 |
-| **celestial-narrative** | 步骤场景→修行/仪式步骤，飘逸长袍人物；金色步骤编号；天界氛围光效；智慧引语框 |
 | **realistic-portrait** | 步骤主体→高写实细节特写；每步配放大圆展示关键细节；自然光照；工具/材料面板写实渲染 |
 | **traditional-encyclopedia** | 默认风格，无需调整。使用原始 Prompt 片段 |
 
