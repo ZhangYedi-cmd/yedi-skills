@@ -1,108 +1,93 @@
-# Portrait Layouts 竖版 (1792×2400 / 3:4)
+# Portrait Layouts 竖版 (1792×2400 / 3:4) — v3.0
 
-## center-radial 中心辐射
-```
-Central large [subject] on aged Chinese paper, surrounded by [N] smaller labeled
-specimens in organic layout. Each with hand-written Chinese name label.
-Bold Chinese title「[标题]」at top. Red square stamps at corners.
-```
-主体35-45%，环绕6-10个小图
+v3.0 将 7 种版面精简为 **1 种主版面 + 2 种子模式**，有机海报取代刚性三栏。
 
-## annotated 解剖标注（知识图解叠层）
+---
+
+## organic-poster 有机海报（唯一主版面）
+
 ```
-Upper half: [subject] illustration on aged Chinese paper with [N] annotation
-lines to Chinese labels. Red square stamps top-left "[系列标签]" and top-right
-"[主题词]". Very large bold Chinese main title below illustration.
+Portrait (3:4). Subject(s) expand freely in organic composition, NOT confined
+to rigid panels. Illustration breathes naturally — subjects can cross zones,
+overlap each other, extend to canvas edges.
+
+Title zone (top 15%): brush calligraphy main title at top, subtitle below,
+English line below subtitle. Red square stamps top-left and top-right.
+
+Illustration zone (mid 75%): main subject(s) placed organically — portrait
+figure can dominate one full side vertically. Supporting elements scattered
+naturally around primary subject. Knowledge annotation lines extend from
+subjects. Scattered red seal stamps and background depth elements within this zone.
+
+Bottom zone (10%): dot-separated attribute list OR wisdom quote in red-bordered box.
+Credit: 作者：@知渡 at very bottom.
+```
+
+**适用**：所有主题的内容页；封面使用 dense-cluster 子模式（见下）
+
+**知识区块位置（内容页）**：
+- 分栏知识块：左右各一列，在插画两侧或插画下方
+- 单列知识框：插画下方 35-45% 区域
+- 底部总结框：朱砂红边框，楷体斜体
+
+---
+
+## dense-cluster 密集簇拥（封面专用子模式）v3.1
+
+> 封面生成时强制使用此模式。内容页不使用。
+
+```
+DENSELY PACKED composition filling the entire canvas edge to edge.
+Minimal white space. Elements tightly clustered, overlapping at edges —
+creating tapestry-like richness, NOT isolated specimens on blank paper.
+
+Anchor figure: ONE dominant subject occupying the ENTIRE LEFT SIDE (or RIGHT SIDE)
+vertically — this is the LARGEST element, significantly bigger than others.
+
+Supporting cast: 6-10 secondary subjects clustered TIGHTLY around the anchor,
+overlapping each other and the anchor figure. Loose scattered elements (stones,
+drops, petals, leaves) fill any remaining gaps.
+
+Background depth: faint architectural or landscape silhouettes in atmospheric
+ink wash behind all subjects — Forbidden City outlines, mountain ridges,
+pavilion silhouettes etc. VERY FAINT, purely atmospheric.
+
+NO empty zones. NO isolated floating subjects. NO grid-like regular spacing.
+Fill every quadrant with subjects, decorations, or background depth elements.
+```
+
+**封面 Prompt 必加语言**：
+```
+DENSELY PACKED filling the entire canvas edge to edge. Minimal white space.
+Tightly clustered, overlapping subjects creating tapestry-like richness.
+[Anchor figure] occupying the ENTIRE [LEFT/RIGHT] SIDE vertically — the LARGEST
+figure in the composition. Loose [scattered elements] filling gaps.
+Faint [background architecture] silhouettes in atmospheric ink wash behind subjects.
+```
+
+---
+
+## annotated 解剖标注（内容页子模式）
+
+```
+Upper half: subject illustration with [N] thin annotation lines to Chinese labels.
+Red square stamps at corners. Large brush calligraphy title at top.
 Lower half: structured knowledge panels — [M] boxed sections with ① ② ③ ④
-numbered items, each with brief Chinese description.
-[If applicable] ✓ correct example scene on right, ✗ incorrect example on left.
-Bottom: tool/item reference diagram OR summary quote box in italic style.
-Credit: 作者：@知渡 at bottom.
-```
-插画占40-55%，知识块占35-45%，标注4-10条
-
-## grid-surround 九宫环绕
-```
-Central [subject] in the middle on aged Chinese paper, surrounded by [N]
-companion items in symmetrical grid. Each with Chinese name label.
-Red square stamps at top corners. Faint traditional Chinese landscape or
-ink-wash mountain background. Chinese title at top.
-```
-主体30-40%，配件8-12个，适合 grid-collage / group-portrait 构图
-
-## fusion-plate 融合图版
-```
-Top: silhouette comparison of [A] and [B] with plus/equals signs leading to [C].
-Center (40%): large [C] illustration with annotation lines in Chinese.
-Sides: behavioral vignettes. Bottom: comparison table and trait list.
-Red square corner stamps. Chinese title at top.
-```
-
-## sequential 动态序列
-```
-Central [subject] in action with numbered (①②③) trajectory paths or step
-sequence. Scene vignettes showing stages. Step description boxes alongside.
-Red square corner stamp top-left for series label. Large Chinese title.
-```
-轨迹/步骤节点4-8个，适合 infographic 构图
-
-## knowledge-split 知识分栏（博主内容页主力版型）
-```
-Top (15%): Very large bold Chinese title "[核心词]". Red square stamps at corners.
-Upper middle (40%): Central illustration — [subject] with annotation lines.
-Below illustration: thin horizontal divider.
-Lower section split into 2-3 columns of knowledge boxes:
-  Left column: [知识块1标题] with ① ② ③ items
-  Right column: [知识块2标题] with bullet items or tool diagram
-Bottom row: [智慧点评框 / 总结金句] in bordered italic box.
+numbered items. [If applicable] ✓ correct scene (right) vs ✗ incorrect scene (left).
+Bottom: summary quote box in bordered italic style.
 Credit: 作者：@知渡.
 ```
-适合 center-radial / anatomy-atlas 构图的内容页
 
-## tri-panel 三栏图版（博物深度解析）
-```
-Three-column botanical/encyclopedic deep-analysis layout on aged xuan paper.
-
-Left column (~25%):
-  Top: [形态特征模块] — close-up detail of [主体局部特征] with annotation lines
-       (e.g., 花型特征模块 / 叶片形态模块)
-  Middle: [圆形结构示意窗] — circular cross-section or internal structure diagram
-  Below: [生长环境模块] — text block describing habitat/conditions
-  Bottom: [生长周程] — circular lifecycle flow diagram with stages
-       (e.g., 萌芽 → 叶片生长期 → 花芽分化 → 开花期 → 营养回收期 → 休眠期)
-
-Center column (~50%):
-  Top: 「[主标题]」in large bold brackets + category line + Latin/English name
-  Main: Large detailed [主体] specimen illustration occupying most of center,
-       with [N] thin annotation lines pointing to labeled parts
-  Red square stamps at top corners of the center panel area
-
-Right column (~25%):
-  Header: [应用/栽培管理] section title
-  Content: 4-6 vertically stacked scene vignettes, each showing a person
-       interacting with the subject in different scenarios:
-       Scene 1: [日常养护/基础操作]
-       Scene 2: [关键阶段管理]
-       Scene 3: [特殊时期处理]
-       Scene 4: [观赏/使用状态]
-       Scene 5: [日常场景展示]
-  Each scene has Chinese label and brief description
-
-Bottom strip (~12%, full width):
-  Left half: [阶段时间轴] — growth/development stage progression showing
-       the subject at 4-5 different stages left to right
-  Right half: [特征对比] — comparison of key features at different states
-       (e.g., 新叶 → 成熟 → 老叶 → 老旧)
-```
-主体占中栏50%，左栏科学分析，右栏实用场景，底栏时间轴+对比
-适合 anatomy-atlas / group-portrait 构图，**最适合植物、动物、食材等需要深度解析的单品主题**
+插画占40-55%，知识块占35-45%，标注4-10条
 
 ---
 
 ## 通用尾部（附加到所有竖版 prompt）
+
 ```
-Chinese historical encyclopedia illustration style on aged xuan paper.
-Warm muted tones (#F0E0C0 background), deep sepia ink (#3A2A1A) for lines
-and text, cinnabar red (#C0392B) for stamps and emphasis.
-NOT Western Victorian border, NOT faux-Latin, NOT anime, NOT photorealistic.
+Chinese historical encyclopedia illustration on clean warm cream paper (#F5EED8).
+Subtle paper grain only — NO heavy aging, NO fold marks, NO dark stains.
+Deep sepia ink (#3A2A1A) for lines and text, cinnabar red (#C0392B) for stamps
+and keyword tags, amber gold (#FFBF00) for knowledge frames.
+NOT Western Victorian border, NOT faux-Latin, NOT anime, NOT photorealistic CGI.
 ```

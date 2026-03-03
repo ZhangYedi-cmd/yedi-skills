@@ -1,9 +1,9 @@
 ---
 name: first-time-setup
-description: First-time setup flow for wanwu-tujian preferences
+description: First-time setup flow for wanwu-tujian preferences (v3)
 ---
 
-# 首次设置
+# 首次设置 — v3
 
 ## 概述
 
@@ -53,6 +53,8 @@ options:
     description: "根据内容自动选择最佳风格"
   - label: "traditional-encyclopedia"
     description: "传统百科 — 宣纸底+工笔+知识图解（万能默认）"
+  - label: "realistic-portrait"
+    description: "写实群像 — 高写实纹理+自然光影（适合动植物/品种类）"
 ```
 
 ### 问题 2: 水印
@@ -67,7 +69,7 @@ options:
 
 位置默认 bottom-right。
 
-### 问题 3: 默认构图偏好
+### 问题 3: 默认构图偏好（v3 — 4种）
 
 ```
 header: "构图"
@@ -79,7 +81,11 @@ options:
     description: "中心辐射式 — 适合规则/方法/哲理类（互动量最高）"
   - label: "group-portrait"
     description: "群像集合式 — 适合品种/分类/大全类"
+  - label: "infographic"
+    description: "信息图表式 — 适合教程/步骤/指南类"
 ```
+
+> v3 已合并：散点图标式 → center-radial；九宫格 → group-portrait
 
 ### 问题 4: 保存位置
 
@@ -107,14 +113,15 @@ options:
 3. 确认："偏好已保存到 [路径]"
 4. 继续 Step 1
 
-## EXTEND.md 模板
+## EXTEND.md 模板（v3）
 
 ```yaml
 ---
-version: 2
+version: 3
 preferred_style: [selected style or auto]
 color_energy: auto
 enable_light_effects: true
+realism_level: auto
 watermark:
   enabled: [true/false]
   content: "[user input or empty]"
@@ -132,12 +139,20 @@ credit:
 preferred_model: auto
 language: null
 style_tweaks:
-  paper_aging: medium
+  paper_aging: light
   info_density: high
-  floral_border: false
-  scroll_label: false
 ---
 ```
+
+## v2 → v3 迁移说明
+
+如发现已存在 `version: 2` 的 EXTEND.md，自动应用以下映射：
+- `color_energy: VIBRANT` → `NATURAL`
+- `style_tweaks.paper_aging: medium/heavy` → `light`
+- `preferred_composition.name: scattered-icons` → `center-radial`
+- `preferred_composition.name: grid-collage` → `group-portrait`
+- 新增 `realism_level: auto`
+- `version: 2` → `version: 3`
 
 ## 后续修改
 

@@ -1,4 +1,4 @@
-# 万物图鉴 内容分析框架
+# 万物图鉴 内容分析框架 — v3.1
 
 深度分析框架，融合小红书平台特性与万物图鉴垂直领域信号。
 
@@ -8,7 +8,7 @@
 - 最大化 Hook 吸引力和翻页动力
 - 识别收藏/分享触发点
 - 规划视觉叙事弧线
-- 自动匹配最优构图模式
+- 自动匹配最优构图模式和写实度
 
 ## 平台特性（小红书）
 
@@ -17,17 +17,19 @@
 - **Save Value**: 值得收藏备查的内容
 - **Share Triggers**: 驱动分享的情感共鸣
 
+---
+
 ## 分析维度
 
 ### 1. 内容类型分类（万物图鉴5类）
 
 | 类型 | 特征 | 推荐构图 | 互动潜力 |
 |------|------|----------|----------|
-| 人生哲理 | 规则/智慧/行为准则，强收藏+强分享 | center-radial / scattered-icons | ⭐⭐⭐⭐⭐ 最高 |
+| 人生哲理 | 规则/智慧/行为准则，强收藏+强分享 | center-radial | ⭐⭐⭐⭐⭐ 最高 |
 | 知识科普 | 品种/分类/百科，高信息密度 | group-portrait / anatomy-atlas | ⭐⭐⭐⭐ |
 | 生活实用 | 教程/步骤/指南，强收藏 | infographic | ⭐⭐⭐⭐ |
-| 趋势商业 | 行业/趋势/榜单 | grid-collage / center-radial | ⭐⭐⭐ |
-| 传统文化 | 民俗/国粹/节日/非遗 | grid-collage / group-portrait | ⭐⭐⭐⭐ |
+| 趋势商业 | 行业/趋势/榜单 | center-radial / group-portrait | ⭐⭐⭐ |
+| 传统文化 | 民俗/国粹/节日/非遗 | group-portrait | ⭐⭐⭐⭐ |
 
 ### 2. Hook 分析（爆款标题潜力）
 
@@ -87,38 +89,38 @@
 - 挑战: "你能做到几条？"
 - @好友: "@你那个需要看这个的朋友"
 
-### 5. 风格变体推荐（v2.0 新增）
+### 5. 风格变体推荐（v3.1 更新 — 含写实度）
 
 根据内容信号自动推荐最优风格变体（详见 `elements/illustration-styles.md`）：
 
-| 内容信号词 | 推荐风格 | 色彩能量 | 备选风格 |
-|-----------|---------|---------|---------|
-| 星座/MBTI/性格/人格类型/XX座 | traditional-encyclopedia | WARM | realistic-portrait |
-| 福报/功德/因果/修行/天规/佛道 | traditional-encyclopedia | WARM | realistic-portrait |
-| 犬种/猫种/动物品种/花卉鉴赏 | realistic-portrait | VIBRANT | traditional-encyclopedia |
-| 品种/种类/分类/大全/图鉴 | traditional-encyclopedia | WARM | realistic-portrait |
-| 规则/行为/方法/秘诀/X种/X个 | traditional-encyclopedia | WARM | realistic-portrait |
-| 步骤/教程/怎么做/流程/指南 | traditional-encyclopedia | WARM | — |
-| 人生/哲理/道理/准则/十则 | traditional-encyclopedia | WARM | realistic-portrait |
-| 合集/国粹/民俗/习俗/文化 | traditional-encyclopedia | WARM | — |
-| 解析/成分/结构/功效/本草 | traditional-encyclopedia | WARM | realistic-portrait |
+| 内容信号词 | 推荐风格 | 色彩能量 | 写实度 | 备选风格 |
+|-----------|---------|---------|--------|---------|
+| 星座/MBTI/性格/人格类型/XX座 | traditional-encyclopedia | WARM | 75-80% | realistic-portrait |
+| 福报/功德/因果/修行/天规/佛道 | traditional-encyclopedia | WARM | 70-75% | realistic-portrait |
+| 犬种/猫种/动物品种/花卉鉴赏 | realistic-portrait | NATURAL | 80-85% | traditional-encyclopedia |
+| 品种/种类/分类/大全/图鉴 | traditional-encyclopedia | WARM | 75-80% | realistic-portrait |
+| 规则/行为/方法/秘诀/X种/X个 | traditional-encyclopedia | WARM | 70-75% | realistic-portrait |
+| 步骤/教程/怎么做/流程/指南 | traditional-encyclopedia | WARM | 70-75% | — |
+| 人生/哲理/道理/准则/十则 | traditional-encyclopedia | WARM | 70-75% | realistic-portrait |
+| 合集/国粹/民俗/习俗/文化 | traditional-encyclopedia | WARM | 75-80% | — |
+| 解析/成分/结构/功效/本草 | traditional-encyclopedia | WARM | 75-80% | realistic-portrait |
 
-### 6. 内容信号 → 构图自动推荐
+### 6. 内容信号 → 构图自动推荐（v3.0 更新）
 
-| 内容信号词 | 推荐构图 |
-|------------|----------|
-| 品种/种类/分类/大全/图鉴 | group-portrait |
-| 规则/行为/方法/秘诀/X种/X个 | center-radial |
-| 步骤/教程/怎么做/流程/指南 | infographic |
-| 人生/哲理/道理/准则/十则 | scattered-icons |
-| 合集/国粹/民俗/习俗/文化 | grid-collage |
-| 解析/成分/结构/功效/本草 | anatomy-atlas |
+| 内容信号词 | 推荐构图 | 子模式 |
+|------------|----------|--------|
+| 品种/种类/分类/大全/图鉴 | group-portrait | organic-spread (内容) / dense-cluster (封面) |
+| 合集/国粹/民俗/习俗/文化 | group-portrait | dense-cluster (封面) / grid-panel (内容) |
+| 规则/行为/方法/秘诀/X种/X个 | center-radial | radial |
+| 人生/哲理/道理/准则/十则 | center-radial | scattered-concept |
+| 步骤/教程/怎么做/流程/指南 | infographic | — |
+| 解析/成分/结构/功效/本草 | anatomy-atlas | — |
 
 ### 7. 翻页流设计（Swipe Flow）
 
 | 位置 | 目的 | Hook 策略 |
 |------|------|-----------|
-| **封面 (Cover)** | 停住滑动 | 最强视觉冲击 + 权威古典感标题 |
+| **封面 (Cover)** | 停住滑动 | 最强视觉冲击 + 权威古典感标题 + dense-cluster 布局 |
 | **铺垫 (Setup)** | 建立语境 | 为什么要了解？共鸣/好奇 |
 | **核心 (Core)** | 交付价值 | 每页1-2个要点，高信息密度 |
 | **收获 (Payoff)** | 实践收获 | 可执行的建议/总结 |
@@ -129,6 +131,8 @@
 - 编号递进："第3个最重要"
 - 悬念递进："最后一个很少人知道"
 - 信息缺口：需要翻页才能看到完整内容
+
+---
 
 ## 输出格式
 
@@ -141,7 +145,8 @@ user_language: zh
 recommended_image_count: [N]
 recommended_composition: [构图名]
 recommended_style: [realistic-portrait / traditional-encyclopedia]
-color_energy: [VIBRANT / WARM]
+realism_level: [70-85]
+color_energy: [NATURAL / WARM]
 light_effect: [natural-warm / ink-atmospheric]
 ---
 
@@ -168,13 +173,14 @@ light_effect: [natural-warm / ink-atmospheric]
 
 ## 风格推荐
 - **推荐风格**: [variant name] — [理由]
-- **色彩能量**: [VIBRANT/WARM]
+- **写实度**: [X]%
+- **色彩能量**: [NATURAL/WARM]
 - **备选风格**: [variant name]
 
 ## 构图推荐
-1. **[构图名] + [版面]** — [理由] (recommended)
-2. **[构图名] + [版面]** — [理由]
-3. **[构图名] + [版面]** — [理由]
+1. **[构图名] + [子模式]** — [理由] (recommended)
+2. **[构图名] + [子模式]** — [理由]
+3. **[构图名] + [子模式]** — [理由]
 
 ## 翻页流
 | Image | Position | Purpose | Hook |
@@ -185,6 +191,8 @@ light_effect: [natural-warm / ink-atmospheric]
 | N | Ending | [目的] | [钩子] |
 ```
 
+---
+
 ## 分析检查清单
 
 进入大纲生成前确认：
@@ -193,7 +201,9 @@ light_effect: [natural-warm / ink-atmospheric]
 - [ ] 明确主要受众？
 - [ ] 识别了收藏/分享触发点？
 - [ ] 风格变体已推荐（含理由）？
+- [ ] 写实度已确定（70-85%，按内容类型映射）？
 - [ ] 色彩能量级别已确定？
 - [ ] 内容信号→构图映射完成？
+- [ ] 封面使用 dense-cluster 模式规划？
 - [ ] 翻页流已规划？
 - [ ] 推荐了3个构图+版面组合？

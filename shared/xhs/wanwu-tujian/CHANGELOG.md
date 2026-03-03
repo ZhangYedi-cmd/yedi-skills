@@ -1,5 +1,83 @@
 # Changelog
 
+## 3.1.0 (2026-03-03)
+
+### realism_level 参数 + 视觉 DNA 强化
+
+基于实际封面生成迭代，引入动态写实度参数，强化毛笔书法标题和印章系统。
+
+**新增**:
+- **`realism_level` 动态参数** (70-85%): 按内容类型自动映射写实度
+  - Prompt 模板：`[X]% photorealism with [100-X]% hand-painted artistic warmth`
+  - realistic-portrait: 80-85%（写实感更强）
+  - traditional-encyclopedia: 70-80%（更多手绘画感）
+- **毛笔书法 L1 标题规范**: 所有图片 L1 必须指定 `BOLD BRUSH CALLIGRAPHY STYLE (毛笔书法字体) — thick and thin stroke variation, ink bleeding edges, NOT printed font`
+- **扩展印章系统**: 2 固定角标 + 2-3 散布印章（朱砂红贯穿全图，共 6-12 个红色锚点）
+- **封面底部点分隔列表**: 封面 L3 位置使用 `[词1] · [词2] · [词3]` 格式（非「」标签）
+- **`realism_level` 字段**: analysis.md/outline.md YAML 新增此字段
+- **Auto Selection 写实度列**: SKILL.md 自动推荐表新增 realism_level 列
+
+**升级**:
+- preferences-schema 版本升级到 v3（新增 `realism_level: auto` 字段）
+- first-time-setup EXTEND.md 模板同步 v3 schema
+- 所有 composition 文件的 Elements 配置新增 `realism_level` 字段
+- prompt-assembly.md Module 1 新增 realism_level 注入
+- analysis-framework.md 风格推荐表新增写实度列
+
+---
+
+## 3.0.0 (2026-03-03)
+
+### Style × Composition × Layout 精简重构
+
+基于对 @知渡 10+ 张实际爆款图的深度分析，大幅精简视觉体系，提升 Prompt 质量。
+
+**核心变化**:
+
+#### 视觉系统升级
+- **背景色净化**: `#F0E0C0~#E8D5B0` → `#F5EED8~#FAF5EC`（更干净，无重度做旧感）
+- **纸张质感简化**: 彻底移除 fold marks、age spots、worn edges、dark stains
+- **色彩能量重命名**: `VIBRANT` → `NATURAL`（realistic-portrait 专用，50-75%饱和度）
+- **主题色精简**: 12色 → 6色（保留 fire-red, ocean-blue, forest-green, royal-gold, earth-brown, jade-green）
+
+#### 布局重构（竖版）
+- **删除 `tri-panel`**（刚性三栏）
+- **新增 `organic-poster`**（有机海报式）: 主体自由扩展，不受栏位限制，信息模块有机散布
+- **新增 `dense-cluster`**（封面专用）: 密集铺满，锚定主体占整侧，支撑主体紧密叠压，散落元素填充
+- **保留 `annotated`**（内容页子模式，上图下知识）
+- 横版: 5种 → 2种（保留 side-by-side, panoramic）
+
+#### 构图精简（6→4）
+- **合并 `scattered-icons` → `center-radial`**（新增 scattered-concept 子模式）
+- **合并 `grid-collage` → `group-portrait`**（新增 grid-panel 子模式）
+- 保留：`group-portrait`, `center-radial`, `infographic`, `anatomy-atlas`
+- 删除文件：`scattered-icons.md`, `grid-collage.md`
+
+#### 字体层级扩展（7级）
+- **L4 分区标题**（新）: Bold + 边框容器，用于区块标题
+- **L6 「」关键词标签**（新）: 水平排列标签条，红色边框/底色
+- **L7 引用/智慧框**（新）: 红框智慧语录/幽默点评，底部固定位置
+- L1 明确要求毛笔书法风格（v3.1 进一步强化）
+
+#### 信息模块新增
+- 「」关键词标签条（主体下方 3-6 个标签）
+- 红框引用/智慧框（L7，底部）
+- 金属器物星形闪光效果
+- 封面背景深度（极淡建筑/自然剪影，水墨晕染）
+- 散落主题元素（小图标散落在画面空白处）
+
+#### 工作流更新
+- `analysis-framework.md`: 内容信号→构图映射更新（4种），新增 realism_level 列
+- `outline-template.md`: YAML 新增 cover_layout: dense-cluster 字段，封面规划更新
+- `prompt-assembly.md`: Module 1 realism_level，Module 2 变体更新（NATURAL/photorealist→naturalist），Module 7 散布印章+金属闪光+散落元素
+- `preferences-schema.md`: v3 schema（4构图，paper_aging 默认 light，新增 realism_level）
+
+**向后兼容**:
+- traditional-encyclopedia 作为默认，v2.0 内容调整风格描述后可复用
+- 旧 EXTEND.md（v2）自动迁移：VIBRANT→NATURAL, scattered-icons→center-radial, grid-collage→group-portrait
+
+---
+
 ## 2.0.0 (2026-03-03)
 
 ### Style × Composition × Layout 3轴系统

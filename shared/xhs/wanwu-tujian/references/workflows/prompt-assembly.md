@@ -1,4 +1,4 @@
-# 万物图鉴 提示词组装
+# 万物图鉴 提示词组装 — v3.1
 
 ## 9 模块结构
 
@@ -14,17 +14,25 @@
 [9. Watermark]      — 水印（如启用）
 ```
 
+---
+
 ## Module 1: Image Spec
+
 ```
 Create a [STYLE_NAME] illustration for Xiaohongshu.
 Orientation: [Portrait/Landscape]. Aspect Ratio: [3:4 / 1792×2400].
 Style: [STYLE_DESCRIPTION]. Quality: Museum-grade detail.
+[realism_level]% photorealism with [100-realism_level]% hand-painted artistic warmth.
 ```
 
-| Style Variant | STYLE_DESCRIPTION |
-|---------------|-------------------|
-| realistic-portrait | Detailed semi-realistic portrait with rich textures and natural lighting |
-| traditional-encyclopedia | Chinese traditional encyclopedia illustration with knowledge infographic overlay |
+| Style Variant | STYLE_DESCRIPTION | 写实度范围 |
+|---------------|-------------------|----------|
+| realistic-portrait | High-quality naturalist illustration with visible brushwork | 80-85% |
+| traditional-encyclopedia | Chinese traditional encyclopedia illustration with knowledge infographic overlay | 70-80% |
+
+> **写实度映射**：详见 `elements/illustration-styles.md` 的自动映射表。
+
+---
 
 ## Module 2: Style Base — 2 Named Variants ⚠️ CRITICAL
 
@@ -33,212 +41,269 @@ Style: [STYLE_DESCRIPTION]. Quality: Museum-grade detail.
 > **详细参考**：`references/elements/illustration-styles.md`
 
 ### Variant A: realistic-portrait（写实群像）
+
 ```
 Visual Style (CRITICAL — WanWuTuJian realistic-portrait variant):
-- Detailed semi-realistic painting with rich texturing and natural lighting
-- Subjects: photographic-level detail in animal/plant/object rendering,
-  detailed fur/feather/petal textures, realistic proportions
-- Rich color gradations, realistic color temperature, full saturation on
-  natural subjects — fur has multiple color tones, eyes are detailed
+- High-quality naturalist illustration, field-guide quality with visible brushwork
+- [realism_level]% photorealism with [100-realism_level]% hand-painted warmth
+- Subjects: fine fur/feather/petal textures, accurate proportions, painterly
+  quality — NOT photographic, NOT CGI, NOT 3D render
+- Rich color gradations, natural color temperature, refined saturation on
+  natural subjects
 - Natural warm side-lighting with soft shadows and environmental reflections
 - Subject occupies 45-55% of canvas, richly detailed and textured
-- Background: warm neutral with subtle paper texture, focus entirely on
-  subject realism; environmental context where appropriate
-- Color energy: VIBRANT — rich natural colors at full saturation; the subject
-  is the visual star with maximum detail and color richness
+- Background: clean warm cream (#F5EED8~#FAF5EC), minimal paper grain only
+- Color energy: NATURAL — rich natural colors with refined saturation and
+  visible painterly quality
 - Knowledge panels: species/variety info cards, annotation systems,
   comparison tables with clean layout
 - Corner stamps: red square Chinese character stamps at top corners
+- Additional scattered red seal stamps: 2-3 distributed across image
 - Credit: 作者：@知渡
-- NO supernatural glow; NO cartoon/chibi; NO flat illustration;
-  NO Western Victorian elements; NO faux-Latin
+- NOT supernatural glow; NOT cartoon/chibi; NOT flat illustration;
+  NOT Western Victorian elements; NOT faux-Latin; NOT photorealistic CGI
 ```
 
 ### Variant B: traditional-encyclopedia（传统百科）— 升级版默认
+
 ```
 Visual Style (CRITICAL — WanWuTuJian traditional-encyclopedia variant):
 - Chinese traditional encyclopedia illustration aesthetic (历史图鉴风格)
+- [realism_level]% photorealism with [100-realism_level]% hand-painted warmth
 - Detailed semi-realistic illustration of historical Chinese figures, plants,
   animals and landscapes — NOT Western natural history watercolor plates
 - Illustration technique: fine-line ink contour + watercolor fill
 - Traditional Chinese figures wear historical robes (汉服/布衣/文人服), depicted
   with narrative and expressive quality
-- Background: aged Chinese xuan paper / old book page (#F0E0C0 to #E8D5B0),
-  warm matte yellowed surface, subtle fold marks and age spots
+- Background: clean warm cream paper (#F5EED8~#FAF5EC), subtle paper grain only
+  — NO fold marks, NO heavy aging, NO dark stains, NO torn edges
 - Color energy: WARM — muted warm background BUT natural subjects (plants,
   animals, costumes) use RICHER, MORE SATURATED colors as deliberate contrast;
   cinnabar red (#C0392B) and amber gold (#FFBF00) accents are BOLD, not faded
 - Knowledge infographic overlay: structured text blocks, boxed knowledge panels,
   ✓/✗ comparison icons, numbered sections ①②③ are layered OVER the illustration
 - Corner stamps: red square Chinese character stamps at top corners
+- Additional scattered red seal stamps: 2-3 distributed across image
 - Credit: 作者：@知渡
-- NO neon, fluorescent, pure black fills, cold white, Western Victorian border
-- NO faux-Latin scientific names
+- NOT neon, NOT fluorescent, NOT pure black fills, NOT cold white
+- NOT Western Victorian border, NOT faux-Latin scientific names
 ```
 
+---
+
 ## Module 3: Composition
+
 从 `references/compositions/<composition>.md` 加载核心视觉特征和 prompt 片段。
 
-| Composition | 加载文件 |
-|-------------|----------|
-| group-portrait | `compositions/group-portrait.md` |
-| center-radial | `compositions/center-radial.md` |
-| infographic | `compositions/infographic.md` |
-| scattered-icons | `compositions/scattered-icons.md` |
-| grid-collage | `compositions/grid-collage.md` |
-| anatomy-atlas | `compositions/anatomy-atlas.md` |
+| Composition | 加载文件 | 子模式 |
+|-------------|----------|--------|
+| group-portrait | `compositions/group-portrait.md` | organic-spread / dense-cluster (封面) / grid-panel |
+| center-radial | `compositions/center-radial.md` | radial / scattered-concept |
+| infographic | `compositions/infographic.md` | — |
+| anatomy-atlas | `compositions/anatomy-atlas.md` | — |
 
-**封面页**：使用该 composition 的「Prompt 片段（封面）」
-**内容页**：使用该 composition 的「Prompt 片段（内容页）」
+> **废弃**：`scattered-icons.md`（已合并入 center-radial 子模式 B）
+> **废弃**：`grid-collage.md`（已合并入 group-portrait 子模式 C）
 
-> **风格适配**：Composition prompt 片段中如描述"人物"相关特征，需根据当前 Style Variant 调整：
-> - **realistic-portrait**: 人物→写实主体，增加纹理/细节描述
-> - **traditional-encyclopedia**: 保持原始 composition 描述不变
+**封面页**：使用该 composition 的「封面 prompt 片段」+ `dense-cluster` 子模式
+**内容页**：使用该 composition 的「内容页 prompt 片段」
+
+> **风格适配**：见各 composition 文件的 `Style Variant Adaptations` 表。
+
+---
 
 ## Module 4: Layout
+
 从 `references/layouts/` 加载对应版面的 prompt 模板。
 
-**竖版**：`layouts/portrait-layouts.md` → center-radial / annotated / grid-surround / fusion-plate / sequential / knowledge-split / tri-panel
-**横版**：`layouts/landscape-layouts.md` → side-by-side / panoramic / timeline-flow / scene-map / dashboard
+**竖版**：`layouts/portrait-layouts.md`
+- **封面** → `dense-cluster`（密集簇拥，铺满画布）
+- **内容页** → `organic-poster`（有机海报，自由布局）
+- **解剖/知识页** → `annotated`（上图下知识）
+
+**横版**：`layouts/landscape-layouts.md` → `side-by-side` / `panoramic`
+
+---
 
 ## Module 5: Content
+
 ```
 Page Content:
 - Main subject: [描述]
 - Corner stamp left-top: [系列标签，如"图鉴"/"福报·壹"]
 - Corner stamp right-top: [主题词，如"慈悲"/"匠人风骨"]
+- Scattered stamps: [印章1词，如"千年传承"] near [位置], [印章2词] near [位置]
 - Annotation points: [标注列表]
 - Knowledge blocks: [知识框内容，如"四层意义：①... ②... ③... ④..."]
 - Comparison scenes: [✓正确场景 / ✗错误场景]
 - Scene vignettes: [场景小图描述]
+- Scattered elements: [散落物品，如 loose go stones, ink drops, petals]
+- Background depth: [背景深度，如 faint Forbidden City silhouettes]
+- [如有金属物] Metallic glint: bright star-shaped sparkle on [metal object]
 ```
 
+---
+
 ## Module 6: Chinese Text
+
 ```
 Text (render in image):
-- Main title (very large, bold, top center): [主标题，如"师不顺路"]
-- Subtitle (medium, below title): [说明短语，如"中国传统八大天规之首"]
+- Main title (BRUSH CALLIGRAPHY STYLE, ultra-bold, top center): [主标题，如"师不顺路"]
+  → Thick and thin stroke variation, ink bleeding edges, NOT printed font
+- Subtitle (medium serif, below title): [说明短语，如"中国传统八大天规之首"]
 - English subtitle (small serif): [English · Keywords]
 - Category line (small, below English): [属性1｜属性2｜属性3]
 - Corner label top-left (red square): [系列标签]
 - Corner label top-right (red square): [主题词]
+- Scattered red stamps: 「[印章1]」at [位置], 「[印章2]」at [位置]
 - Knowledge block headers: [各框标题]
 - Annotation labels (with lines): [标注1→位置], [标注2→位置]...
+- [封面底部] Dot-separated attribute list: "[attr1] · [attr2] · [attr3]"
+- [内容页底部] Wisdom quote box (L7, red border): "[智慧点评文字]"
 - Credit (small, bottom): 作者：@知渡
 ```
 
+---
+
 ## Module 7: Decorations — 按风格变体选择
 
-> 从 `references/elements/decorations.md` 加载装饰元素。根据 Style Variant 选择对应装饰集。
+> 从 `references/elements/decorations.md` 加载装饰元素。
 
 ### realistic-portrait 装饰
+
 ```
 Decorations:
-- Red square corner stamps at top-left and top-right with Chinese characters
+- Red square corner stamps top-left and top-right with Chinese characters
+- 2-3 additional red seal stamps scattered: 「[词]」near [位置]
 - Species/variety info cards with clean borders
 - Detailed annotation lines with Chinese labels (museum-style)
 - Comparison tables for trait/feature analysis
 - Magnified detail insets in circular frames with dotted border
-- Natural environment corner decorations (subtle foliage, texture)
-- Warm neutral background with subtle paper texture
+- Bright metallic star-shaped glint on any metal surfaces
+- Loose scattered elements ([items]) around main subjects for depth
+- Faint background silhouettes in atmospheric ink wash
+- Clean warm cream background (#F5EED8), subtle paper grain only
 ```
 
 ### traditional-encyclopedia 装饰（默认）
+
 ```
 Decorations:
-- Red square corner stamps at top-left and top-right with Chinese characters
+- Red square corner stamps top-left and top-right with Chinese characters
+- 2-3 additional red seal stamps scattered throughout image
 - Thin-bordered knowledge boxes organized in grid or column layout
 - Annotation lines with Chinese labels
 - Ink-wash mountain or mist corner decorations (subtle)
-- Aged paper texture: fold marks, age spots, worn edges
-- [如有对比]✓ checkmark (green/dark) and ✗ cross (red) comparison icons
-- [如有工具]Tool/item diagram with labeled parts
+- Clean warm cream background (#F5EED8), subtle paper grain only
+  — NO fold marks, NO age spots, NO torn edges
+- [如有对比] ✓ checkmark and ✗ cross comparison icons
+- [如有工具] Tool/item diagram with labeled parts
 - Numbered sections with ①②③ circled numbers
+- [内容页] Row of keyword tags: 「[词1]」「[词2]」「[词3]」with red borders (L6)
+- [底部] Red-bordered wisdom quote box (L7)
 ```
+
+---
 
 ## Module 8: Negative — 按风格变体调整
 
 ### realistic-portrait
+
 ```
 AVOID: supernatural glow effects, cartoon/chibi style, flat illustration,
 Western Victorian ornamental border, faux-Latin scientific names, 3D CGI render,
 anime/manga style, neon colors, fluorescent, cold blue/white tones, pure black
-fills, modern minimalist design, dark background.
+fills, modern minimalist design, dark background, isolated specimens on empty paper,
+photorealistic photography quality (want painterly field-guide quality instead).
 ```
 
 ### traditional-encyclopedia（默认）
+
 ```
 AVOID: Western Victorian ornamental border, faux-Latin scientific names,
 photorealistic photography, 3D CGI render, anime/manga style, neon colors,
 fluorescent, cold blue/white tones, pure black fills, modern minimalist design,
-dark background.
+dark background, heavy paper aging/fold marks/dark stains, isolated floating
+subjects with too much empty space.
 ```
 
+---
+
 ## Module 9: Watermark
+
 ```
 Subtle watermark "[内容]" at [位置], legible but not distracting.
 ```
+
+---
 
 ## 参考图链机制（Visual Consistency — Reference Image Chain）
 
 确保系列内人物/风格一致性：
 1. **图1（封面）优先生成** — 不使用 `--ref`
 2. **图2+ 全部以图1为 `--ref`** — 锚定人物设计、色彩渲染、插画风格
-   ```bash
-   # 生成图1（无 ref）
-   [generate image 01-cover-xxx.png]
 
-   # 生成图2+（以图1为 ref）
-   [generate image 02-content-xxx.png --ref path/to/01-cover-xxx.png]
-   ```
-   这对于包含重复人物、标志性角色或统一插画元素的系列至关重要。
+```bash
+# 生成图1（无 ref）
+[generate image 01-cover-xxx.png]
+
+# 生成图2+（以图1为 ref）
+[generate image 02-content-xxx.png --ref path/to/01-cover-xxx.png]
+```
+
+---
 
 ## Session ID 管理
 
 同系列使用相同 Session ID 保持一致性：
 - 格式：`wanwu-{slug}-{timestamp}`
 - 示例：`wanwu-fu-bao-20260303-143052`
-- 如图片生成工具支持 `--sessionId`，将此 ID 传入所有图片生成调用
+
+---
 
 ## 模型适配
+
 | 模型 | 注意 |
 |------|------|
 | Gemini 3 | 长 prompt 理解好，直接用完整结构；对中文文字渲染相对最好 |
 | GPT-4o | 不支持 negative prompt，正向描述中写"NOT Victorian, NOT Latin text"；中文渲染一般 |
 | Nano Banana | 尾部加 `Please use nano banana pro to generate.` |
 
-## Session 一致性
-同系列所有图保持相同的 **Module 2 Style Variant（逐字一致）**、色彩能量级别、角标印章风格、署名。
-- Module 2 选定一个 Variant（A/B），系列内所有图逐字复制，不可修改
-- Module 7/8 使用与 Module 2 匹配的风格变体装饰/排除项
-- 每张图的 Module 6 中角标内容可按页面主题变化（如 福报·壹/福报·贰/福报·叁...）
+---
 
 ## 封面 vs 内容页的组装差异
 
-### 封面页（Cover）
-- Module 3 用该构图的「封面 prompt 片段」
-- Module 4 用 `center-radial` 或 `grid-surround`
-- Module 5 主体是多个人物/物品的全景汇总，展示所有核心元素
-- Module 6 标题最大，英文副标题完整，两个角标都放系列标签
+### 封面页（Cover）— dense-cluster 模式
 
-### 内容页（Content Pages）
+- Module 3 用该构图的「封面 prompt 片段」
+- Module 4 用 `dense-cluster`（密集铺满画布）
+- Module 5 包含：anchor figure + 密集群像 + 散落元素 + 背景深度 + 散布印章
+- Module 6：L1 毛笔书法标题，底部点号分隔属性列表（不用「」标签）
+
+### 内容页（Content Pages）— organic-poster / annotated
+
 - Module 3 用该构图的「内容页 prompt 片段」
-- Module 4 用 `annotated` 或 `knowledge-split`（上图下知识/左图右知识）
+- Module 4 用 `organic-poster` 或 `annotated`
 - Module 5 重点是知识块叠层：每页一个核心规则，4-8个知识区块
-- Module 6 左上角标为序号标签（如"福报·壹"），右上角标为该页主题词
+- Module 6：L1 毛笔书法，L6 关键词标签条，L7 底部引用框
+
+---
 
 ## Prompt 检查清单
 
 生成前确认：
 - [ ] 风格变体已确定（realistic-portrait / traditional-encyclopedia）
+- [ ] realism_level 已按内容类型确定（70-85%）
 - [ ] Module 2 选用正确的 Variant 且与系列其他图完全一致（逐字）
+- [ ] 封面使用 dense-cluster 布局（锚定人物+密集群像+散落元素）
+- [ ] L1 标题使用毛笔书法风格（BRUSH CALLIGRAPHY STYLE）
+- [ ] 散布印章已设置（2-3个，除固定角标外）
 - [ ] Module 7 装饰集与 Module 2 风格变体匹配
 - [ ] Module 8 排除项与 Module 2 风格变体匹配
 - [ ] 构图片段从正确的 composition 文件加载
 - [ ] 版面模板匹配大纲规格
 - [ ] 内容准确反映大纲条目
-- [ ] 中文文字完整（标题、角标、标注、署名）
+- [ ] 中文文字完整（标题、角标、散布印章、标注、署名）
 - [ ] 署名为"作者：@知渡"
 - [ ] 水印已包含（如偏好中启用）
-- [ ] 无冲突指令（如各 Variant 的排除项不与内容描述冲突）
 - [ ] 图2+ 已设置 --ref 指向图1
