@@ -1,8 +1,9 @@
-# Illustration Style Variants 插画风格变体 — v3.1
+# Illustration Style Variants 插画风格变体 — v3.3
 
 ## Overview
 
 博主 @知渡 根据内容类型使用不同的视觉风格。每种风格变体定义：画技、角色渲染、色彩能量、光效、背景处理。
+v3.3 新增第 3 种风格变体 `anthropomorphic-portrait`（拟人博物）。
 
 **核心规则**：同系列所有图使用同一风格变体（Module 2 逐字一致），不同系列可使用不同变体。
 
@@ -34,7 +35,7 @@ Visible brushstrokes and painterly quality — NOT photographic, NOT CGI, NOT 3D
 
 ---
 
-## 2 种风格变体
+## 3 种风格变体
 
 ### 1. realistic-portrait（写实群像）
 
@@ -98,7 +99,38 @@ structured text blocks, boxed panels, ✓/✗ comparison icons, numbered ①②�
 
 ---
 
-## Style Selection Matrix（自动推荐）
+### 3. anthropomorphic-portrait（拟人博物）— v3.3 新增
+
+> **来源**：十二生肖古代雅称、神话角色合集
+
+| 维度 | 描述 |
+|------|------|
+| **画技** | 细线勾勒+丰富上色，介于写实与卡通之间的"拟人插画" |
+| **角色风格** | 动物/神话生物穿中式服装、持器物、有人格化表情和动作 |
+| **角色占比** | 40-55% 画面（多角色密集排列时总体更高） |
+| **色彩能量** | WARM-VIBRANT（比 WARM 更饱和，角色服装色彩鲜明） |
+| **光效** | 自然光+局部金色光效（如龙珠、法器发光） |
+| **背景** | 干净暖色底(#E8D5B0~#F5EED8)，配淡水墨山水远景 |
+| **信息密度** | HIGH（10-15角色+名牌标注） |
+| **信息模块** | 贴身旗帜/卷轴名牌、底部符号横条、角花装饰 |
+| **适用** | 生肖合集、神话角色图鉴、拟人化动物/植物百科 |
+
+**Prompt 片段**：
+```
+Chinese traditional encyclopedia illustration with ANTHROPOMORPHIC style.
+[realism_level]% photorealism with [100-realism_level]% hand-painted warmth.
+Characters are [animals/mythical creatures] depicted in ANTHROPOMORPHIC style —
+wearing traditional Chinese clothing (robes, armor, hats), holding themed objects,
+with expressive faces and human-like postures. NOT chibi/super-deformed,
+NOT anime, NOT realistic animals — SEMI-REALISTIC anthropomorphic illustration.
+Each character carries a [banner flag / scroll tag] with their Chinese name.
+Rich, saturated colors on costumes and accessories, warm natural lighting.
+Background: clean warm parchment (#E8D5B0) with faint ink-wash landscape behind.
+```
+
+---
+
+## Style Selection Matrix（自动推荐 v3.3 含拟人博物）
 
 | 内容信号词 | 推荐风格 | 色彩能量 | 写实度 |
 |-----------|---------|---------|--------|
@@ -106,6 +138,7 @@ structured text blocks, boxed panels, ✓/✗ comparison icons, numbered ①②�
 | 福报/功德/因果/修行/天规/佛道 | traditional-encyclopedia | WARM | 70-75% |
 | 犬种/猫种/动物品种/花卉鉴赏 | realistic-portrait | NATURAL | 80-85% |
 | 品种/种类/分类/大全/图鉴 | traditional-encyclopedia | WARM | 75-80% |
+| **生肖/神话角色/拟人动物/角色合集** | **anthropomorphic-portrait** | **WARM-VIBRANT** | **75-80%** |
 | 规则/行为/方法/秘诀/X种/X个 | traditional-encyclopedia | WARM | 70-75% |
 | 步骤/教程/怎么做/流程/指南 | traditional-encyclopedia | WARM | 70-75% |
 | 人生/哲理/道理/准则/十则 | traditional-encyclopedia | WARM | 70-75% |
@@ -114,15 +147,16 @@ structured text blocks, boxed panels, ✓/✗ comparison icons, numbered ①②�
 
 ---
 
-## Color Energy Levels（色彩能量级别）
+## Color Energy Levels（色彩能量级别 v3.3）
 
 | 级别 | 描述 | 饱和度范围 | 光效 | 适用风格 |
 |------|------|----------|------|---------|
 | ~~MUTED~~ | ~~（v1.0 默认，已废弃）~~ | ~~20-40%~~ | 无 | ~~废弃~~ |
 | **WARM** | 暖色强调+哑光底色，新默认 | 40-65% | 微妙暖光 | traditional-encyclopedia |
 | **NATURAL** | 丰富自然色，精细过渡，有画感 | 50-75% | 自然光 | realistic-portrait |
+| **WARM-VIBRANT** | 暖色底+鲜明服装/配饰色 | 55-80% | 自然光+局部金光 | anthropomorphic-portrait |
 
-> **说明**：v3.1 将 realistic-portrait 的 VIBRANT 更名为 NATURAL，强调"自然画感"而非"全面高饱和"，避免过于卡通化的高彩倾向。
+> **说明**：WARM-VIBRANT 是 WARM 的高饱和变体，用于拟人博物风格——角色服装、旗帜、法器的色彩比 WARM 更浓烈鲜明。
 
 ---
 
