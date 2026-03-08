@@ -34,6 +34,9 @@
 | shared | web | `defuddle` | 0.1.0 | active | `shared/web/defuddle` |
 | shared | xhs | `baoyu-xhs-images` | 0.1.0 | active | `shared/xhs/baoyu-xhs-images` |
 | shared | xhs | `retro-enc` | 0.2.0 | active | `shared/xhs/retro-enc` |
+| shared | xhs | `wanwu-content` | 1.0.0 | active | `shared/xhs/wanwu-content` |
+| shared | xhs | `wanwu-cover` | 2.0.0 | active | `shared/xhs/wanwu-cover` |
+| shared | xhs | `wanwu-series` | 1.0.0 | active | `shared/xhs/wanwu-series` |
 | shared | xhs | `xhs-topic-miner` | 0.3.0 | active | `shared/xhs/xhs-topic-miner` |
 
 ## Trigger Summary
@@ -68,4 +71,7 @@
 - `shared/web/defuddle`: Extract clean markdown content from web pages using Defuddle CLI, removing clutter and navigation to save tokens. Use instead of WebFetch when the user provides a URL to read or analyze, for online documentation, articles, blog posts, or any standard web page.
 - `shared/xhs/baoyu-xhs-images`: Generates Xiaohongshu (Little Red Book) infographic series with 10 visual styles and 8 layouts. Breaks content into 1-10 cartoon-style images optimized for XHS engagement. Use when user mentions "小红书图片", "XHS images", "RedNote infographics", "小红书种草", or wants social media infographics for Chinese platforms.
 - `shared/xhs/retro-enc`: >
+- `shared/xhs/wanwu-content`: >
+- `shared/xhs/wanwu-cover`: >
+- `shared/xhs/wanwu-series`: >
 - `shared/xhs/xhs-topic-miner`: >
