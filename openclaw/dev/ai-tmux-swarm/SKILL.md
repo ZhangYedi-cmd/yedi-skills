@@ -1,9 +1,11 @@
 ---
-name: codex-tmux-swarm
+name: ai-tmux-swarm
 description: 使用 tmux + git worktree + cron 编排多个 AI 编码子任务并行开发、自动监控、异常重启、分钟级进度推送与自动停监控。支持 Codex 和 Claude Code 双引擎。适用于"只描述目标，由 OpenClaw 自主拆分并派发多个编码任务"的长时编码任务（如全栈系统开发、模块并行实现、验收合并）。
 ---
 
-# Codex Tmux Swarm
+# AI Tmux Swarm
+
+使用 tmux + git worktree + cron 编排多个 AI 编码 Agent 并行开发。
 
 ## 支持引擎
 
@@ -29,10 +31,10 @@ description: 使用 tmux + git worktree + cron 编排多个 AI 编码子任务�
 
 ```bash
 # 1) 安装 scaffold（默认 codex 引擎）
-~/.openclaw/skills/codex-tmux-swarm/scripts/install_sims_swarm.sh <repo-path> [chat-id]
+~/.openclaw/skills/ai-tmux-swarm/scripts/install_swarm.sh <repo-path> [chat-id]
 
 # 使用 Claude Code 引擎
-~/.openclaw/skills/codex-tmux-swarm/scripts/install_sims_swarm.sh <repo-path> [chat-id] --engine claude
+~/.openclaw/skills/ai-tmux-swarm/scripts/install_swarm.sh <repo-path> [chat-id] --engine claude
 
 # 2) 启动并行任务 + 启动 cron 监控
 cd <repo-path>
