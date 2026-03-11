@@ -12,6 +12,7 @@ Simplified style tier for quick selection:
 | `hand-drawn` | sketch/warm | Relaxed, reflective, casual content |
 | `editorial` | editorial | Processes, data, journalism |
 | `scene` | warm/watercolor | Narratives, emotional, lifestyle |
+| `xhs-cartoon` | xhs-cartoon | Social media, XHS, casual educational, knowledge cards |
 
 Use Core Styles for most cases. See full Style Gallery below for granular control.
 
@@ -42,19 +43,20 @@ Use Core Styles for most cases. See full Style Gallery below for granular contro
 | `sketch` | Raw pencil notebook style | Brainstorming, creative exploration |
 | `sketch-notes` | Soft hand-drawn warm notes | Educational, warm notes |
 | `vintage` | Aged parchment historical | Historical, heritage |
+| `xhs-cartoon` | Cute cartoon with Morandi colors, hand-drawn text | Social media, XHS, knowledge cards, casual educational |
 
 Full specifications: `references/styles/<style>.md`
 
 ## Type × Style Compatibility Matrix
 
-| | vector-illustration | notion | warm | minimal | blueprint | watercolor | elegant | editorial | scientific |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| infographic | ✓✓ | ✓✓ | ✓ | ✓✓ | ✓✓ | ✓ | ✓✓ | ✓✓ | ✓✓ |
-| scene | ✓ | ✓ | ✓✓ | ✓ | ✗ | ✓✓ | ✓ | ✓ | ✗ |
-| flowchart | ✓✓ | ✓✓ | ✓ | ✓ | ✓✓ | ✗ | ✓ | ✓✓ | ✓ |
-| comparison | ✓✓ | ✓✓ | ✓ | ✓✓ | ✓ | ✓ | ✓✓ | ✓✓ | ✓ |
-| framework | ✓✓ | ✓✓ | ✓ | ✓✓ | ✓✓ | ✗ | ✓✓ | ✓ | ✓✓ |
-| timeline | ✓ | ✓✓ | ✓ | ✓ | ✓ | ✓✓ | ✓✓ | ✓✓ | ✓ |
+| | vector-illustration | notion | warm | minimal | blueprint | watercolor | elegant | editorial | scientific | xhs-cartoon |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| infographic | ✓✓ | ✓✓ | ✓ | ✓✓ | ✓✓ | ✓ | ✓✓ | ✓✓ | ✓✓ | ✓✓ |
+| scene | ✓ | ✓ | ✓✓ | ✓ | ✗ | ✓✓ | ✓ | ✓ | ✗ | ✓ |
+| flowchart | ✓✓ | ✓✓ | ✓ | ✓ | ✓✓ | ✗ | ✓ | ✓✓ | ✓ | ✓ |
+| comparison | ✓✓ | ✓✓ | ✓ | ✓✓ | ✓ | ✓ | ✓✓ | ✓✓ | ✓ | ✓✓ |
+| framework | ✓✓ | ✓✓ | ✓ | ✓✓ | ✓✓ | ✗ | ✓✓ | ✓ | ✓✓ | ✓ |
+| timeline | ✓ | ✓✓ | ✓ | ✓ | ✓ | ✓✓ | ✓✓ | ✓✓ | ✓ | ✓ |
 
 ✓✓ = highly recommended | ✓ = compatible | ✗ = not recommended
 
@@ -85,6 +87,7 @@ Full specifications: `references/styles/<style>.md`
 | Business, professional, strategy, corporate | framework | elegant |
 | Biology, chemistry, medical, scientific | infographic | scientific |
 | Explainer, journalism, magazine, investigation | infographic | editorial |
+| 小红书, social media, casual, fun facts, tips, 科普, cute | infographic | xhs-cartoon |
 
 ## Style Characteristics by Type
 
@@ -172,3 +175,19 @@ Full specifications: `references/styles/<style>.md`
 - Organic flow
 - Personal journey feel
 - Growth narratives
+
+### infographic + xhs-cartoon
+- Morandi soft color palette, cream/pink/mint backgrounds
+- All text in hand-drawn / handwritten style
+- Highlighter marker effect on keywords
+- Cute cartoon icons and emoji-style elements
+- Generous white space, easy to scan
+- No realistic images or fonts
+- Perfect for social media knowledge cards
+
+### comparison + xhs-cartoon
+- Split layout with cartoon dividers
+- Cute icons representing each side
+- Morandi color coding (pink vs mint)
+- Hand-drawn labels and annotations
+- Sticker-like element styling

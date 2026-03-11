@@ -135,6 +135,16 @@ COLORS: Cream background (#F5F0E6), Coral Red (#E07A5F), Mint Green (#81B29A), M
 ELEMENTS: Geometric simplified icons, no gradients, playful decorative elements (dots, stars)
 ```
 
+**Infographic + xhs-cartoon**:
+```
+Xiaohongshu-style cartoon infographic. Hand-drawn style, all text in handwritten font.
+COLORS: Cream background (#FFF8F0), Morandi Pink (#D4A0A0), Morandi Green (#A8C8A0), Morandi Blue (#9BB8D0), fluorescent yellow (#FFF176) highlighter on keywords
+ELEMENTS: Cute cartoon icons, emoji-style decorations, hand-drawn stickers, speech bubbles, doodle borders. NO realistic images or fonts.
+TYPOGRAPHY: All text hand-drawn style, large bold titles, highlighter marker effect on key terms
+COMPOSITION: Generous white space, 1 core point per zone, easy to scan at a glance
+ASPECT: 3:4
+```
+
 ### Scene
 
 ```
@@ -195,6 +205,15 @@ ASPECT: 16:9
 Flat vector comparison with split layout. Clear visual separation.
 COLORS: Left side Coral (#E07A5F), Right side Mint (#81B29A), cream background
 ELEMENTS: Bold icons, black outlines, centered divider line
+```
+
+**Comparison + xhs-cartoon**:
+```
+Xiaohongshu-style cartoon comparison. Hand-drawn style, all text in handwritten font.
+COLORS: Left side Morandi Pink (#D4A0A0), Right side Morandi Green (#A8C8A0), cream background (#FFF8F0)
+ELEMENTS: Cute cartoon divider, hand-drawn icons for each side, sticker-like labels, doodle annotations. NO realistic images or fonts.
+TYPOGRAPHY: Handwritten style, highlighter on key differences
+ASPECT: 3:4
 ```
 
 ### Framework
