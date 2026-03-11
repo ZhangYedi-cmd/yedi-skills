@@ -130,7 +130,7 @@ ANNOTATION LINES (thin sepia #5C3D2E lines extending from subject):
 - Arrow to {部位3}: "{标注文字3}"
 {...6-10条标注}
 
-AUTHOR CREDIT: "作者：万物图鉴" in red #C0392B, small handwritten style, below subject center.
+AUTHOR CREDIT: "作者：知渡" in red #C0392B, small handwritten style, below subject center.
 
 CHARACTER QUOTE BOX (scroll-style frame near subject):
 "{角色名}：{第一人称趣味引言}"

@@ -88,7 +88,7 @@
 - 6-10 条标注线从主体各部位引出
 - 标注内容：解剖特征 / 行为特征 / 文化象征
 - 主体有微观细节（毛发纹理、眼睛反光等）
-- 署名 "作者：万物图鉴" 位于主体中下部，红色
+- 署名 "作者：知渡" 位于主体中下部，红色
 
 ### Prompt 片段
 
@@ -122,7 +122,7 @@ Rendered with silky-smooth digital illustration, rich detail.
 - Arrow to {部位2}: "{标注文字2}"
 {...}
 
-AUTHOR CREDIT: "作者：万物图鉴" in cinnabar red (#C0392B), small handwritten style, below center subject.
+AUTHOR CREDIT: "作者：知渡" in cinnabar red (#C0392B), small handwritten style, below center subject.
 
 CHARACTER QUOTE BOX (below subject):
 Scroll-style speech box containing first-person humorous quote from the subject:
@@ -363,7 +363,7 @@ The scene is dramatic and alive: {动态细节}.
 Background: {环境描述 — 山林/草原/建筑/云雾}.
 Selective breakout: {1-2个元素突破内框描述}.
 
-AUTHOR CREDIT: "作者：@万物图鉴" in cinnabar red, below the scene.
+AUTHOR CREDIT: "作者：知渡" in cinnabar red, below the scene.
 
 RIGHT SIDEBAR (20-25% width, 3-4 knowledge cards):
 
@@ -548,7 +548,7 @@ TITLE BLOCK (top center):
 L1: "「{主标题}」" in bold brush calligraphy, #3A2A1A.
 L2: "{副标题} · {English Title}" below L1, #5C3D2E.
 L3: "{系列名} 第{N}章" small text below L2.
-AUTHOR: "作者：@万物图鉴" in red #C0392B.
+AUTHOR: "作者：知渡" in red #C0392B.
 
 LEFT COLUMN — Timeline/Evolution (20-22% width):
 Section header: "{时间线标题}"

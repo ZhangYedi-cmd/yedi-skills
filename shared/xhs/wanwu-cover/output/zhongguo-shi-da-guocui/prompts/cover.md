@@ -53,7 +53,7 @@ L1 MAIN TITLE: "「中国十大国粹科普图鉴」" in bold Chinese brush call
 L2 ENGLISH SUBTITLE: "Ten Great Quintessences of Chinese Culture · Heritage Encyclopedia" in small serif italic typeface (Garamond style). Centered directly below L1. Color: #5C3D2E. Approximately 1/4 the size of L1.
 
 AUTHOR CREDIT (lower-center):
-"作者：@万物图鉴" in small handwritten-style Chinese script. Semi-transparent at 70% opacity. Color: #5C3D2E.
+"作者：知渡" in small handwritten-style Chinese script. Semi-transparent at 70% opacity. Color: #5C3D2E.
 
 BOTTOM BAR (bottom 8% of canvas):
 "書法 · 武术 · 中医 · 京剧 · 汉服 · 茶艺 · 瓷器 · 围棋 · 剪纸 · 刺绣" in medium Song typeface, separated by centered dots. Color: #5C3D2E. Horizontally centered.
