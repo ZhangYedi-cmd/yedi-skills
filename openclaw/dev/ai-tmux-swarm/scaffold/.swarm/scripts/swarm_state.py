@@ -128,8 +128,8 @@ def validate_manifest(repo_root: Path, manifest_path: Path, default_engine_overr
         raise SystemExit("defaults.max_restarts must be >= 0.")
 
     notify_mode = os.environ.get("SWARM_NOTIFY_MODE", "openclaw_event")
-    if notify_mode not in {"openclaw_event", "telegram", "both", "none"}:
-        raise SystemExit("SWARM_NOTIFY_MODE must be one of: openclaw_event, telegram, both, none")
+    if notify_mode not in {"openclaw_event", "telegram", "feishu", "both", "none"}:
+        raise SystemExit("SWARM_NOTIFY_MODE must be one of: openclaw_event, telegram, feishu, both, none")
 
     openclaw_event_mode = os.environ.get("OPENCLAW_EVENT_MODE", "now")
     if openclaw_event_mode not in {"now", "next-heartbeat"}:
@@ -137,6 +137,8 @@ def validate_manifest(repo_root: Path, manifest_path: Path, default_engine_overr
 
     telegram_target = chat_id_override or os.environ.get("TELEGRAM_CHAT_ID", "")
     telegram_thread_id = os.environ.get("TELEGRAM_THREAD_ID", "")
+    feishu_target = os.environ.get("FEISHU_CHAT_ID", "")
+    feishu_account_id = os.environ.get("FEISHU_ACCOUNT_ID", "")
 
     seen_ids: set[str] = set()
     seen_slugs: set[str] = set()
@@ -283,6 +285,8 @@ def validate_manifest(repo_root: Path, manifest_path: Path, default_engine_overr
             "openclaw_event_mode": openclaw_event_mode,
             "telegram_target": telegram_target,
             "telegram_thread_id": telegram_thread_id,
+            "feishu_target": feishu_target,
+            "feishu_account_id": feishu_account_id,
             "all_terminal_notified_at": None,
         },
         "tasks": built_tasks,
@@ -381,6 +385,24 @@ def notify(state: dict, text: str) -> None:
         if thread_id:
             args.extend(["--thread-id", thread_id])
         subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+
+    feishu_target = state.get("notify", {}).get("feishu_target")
+    if mode in {"feishu", "both"} and feishu_target and command_exists("openclaw"):
+        feishu_args = [
+            "openclaw",
+            "message",
+            "send",
+            "--channel",
+            "feishu",
+            "--target",
+            feishu_target,
+            "--message",
+            text,
+        ]
+        feishu_account = state["notify"].get("feishu_account_id")
+        if feishu_account:
+            feishu_args.extend(["--account", feishu_account])
+        subprocess.run(feishu_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 
 def notification_lines_for_transitions(before: dict[str, str], after_state: dict) -> list[str]:
