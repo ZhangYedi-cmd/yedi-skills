@@ -4,6 +4,8 @@
 
 | Scope | Namespace | Skill | Version | Status | Path |
 |---|---|---|---|---|---|
+| openclaw | claude | `openclaw-claude-code` | 0.1.0 | active | `openclaw/claude/openclaw-claude-code` |
+| openclaw | claude | `universal-claude-bridge` | 0.1.0 | active | `openclaw/claude/universal-claude-bridge` |
 | openclaw | dev | `ai-tmux-swarm` | 0.1.0 | active | `openclaw/dev/ai-tmux-swarm` |
 | shared | content | `baoyu-format-markdown` | 0.1.0 | active | `shared/content/baoyu-format-markdown` |
 | shared | content | `baoyu-markdown-to-html` | 0.1.0 | active | `shared/content/baoyu-markdown-to-html` |
@@ -39,6 +41,8 @@
 
 ## Trigger Summary
 
+- `openclaw/claude/openclaw-claude-code`: Control Claude Code via MCP protocol. Execute commands, read/write files, search code, and use all Claude Code tools programmatically with agent team support.
+- `openclaw/claude/universal-claude-bridge`: Bidirectional bridge between OpenClaw and Claude Code. Handles Claude Code hooks (ask_user_question, permission_prompt, idle_prompt, tool_result, task_complete) via HTTP POST, forwards them to Telegram users, and routes user replies back to Claude Code sessions. Use when: (1) User wants to interact with Claude Code sessions via Telegram, (2) Receiving HTTP webhooks from Claude Code, (3) Managing persistent Claude Code sessions through OpenClaw.
 - `openclaw/dev/ai-tmux-swarm`: 使用 tmux + git worktree + 系统 cron 编排多个 AI 编码子任务并行开发。提供可复制到仓库内的 swarm scaffold，支持 manifest 驱动任务定义、依赖感知调度、异常重试、OpenClaw system event 通知，以及可选 Telegram 回退通知。适用于需要在本地仓库里长期并行跑多个 Codex / Claude Code 子任务的场景，例如模块并行实现、分阶段集成、验收合并。
 - `shared/content/baoyu-format-markdown`: Formats plain text or markdown files with frontmatter, titles, summaries, headings, bold, lists, and code blocks. Use when user asks to "format markdown", "beautify article", "add formatting", or improve article layout. Outputs to {filename}-formatted.md.
 - `shared/content/baoyu-markdown-to-html`: Converts Markdown to styled HTML with WeChat-compatible themes. Supports code highlighting, math, PlantUML, footnotes, alerts, and infographics. Use when user asks for "markdown to html", "convert md to html", "md转html", or needs styled HTML output from markdown.
