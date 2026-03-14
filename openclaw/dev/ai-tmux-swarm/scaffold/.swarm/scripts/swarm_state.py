@@ -127,14 +127,18 @@ def validate_manifest(repo_root: Path, manifest_path: Path, default_engine_overr
     if default_max_restarts < 0:
         raise SystemExit("defaults.max_restarts must be >= 0.")
 
-    notify_mode = os.environ.get("SWARM_NOTIFY_MODE", "openclaw_event")
-    if notify_mode not in {"openclaw_event", "telegram", "feishu", "both", "none"}:
-        raise SystemExit("SWARM_NOTIFY_MODE must be one of: openclaw_event, telegram, feishu, both, none")
+    notify_mode = os.environ.get("SWARM_NOTIFY_MODE", "none")
+    # Legacy: treat "openclaw_event" as "none" (openclaw event is now always sent)
+    if notify_mode == "openclaw_event":
+        notify_mode = "none"
+    if notify_mode not in {"telegram", "feishu", "both", "none"}:
+        raise SystemExit("SWARM_NOTIFY_MODE must be one of: telegram, feishu, both, none")
 
     openclaw_event_mode = os.environ.get("OPENCLAW_EVENT_MODE", "now")
     if openclaw_event_mode not in {"now", "next-heartbeat"}:
         raise SystemExit("OPENCLAW_EVENT_MODE must be 'now' or 'next-heartbeat'")
 
+    agent_id = os.environ.get("SWARM_AGENT_ID", "")
     telegram_target = chat_id_override or os.environ.get("TELEGRAM_CHAT_ID", "")
     telegram_thread_id = os.environ.get("TELEGRAM_THREAD_ID", "")
     feishu_target = os.environ.get("FEISHU_CHAT_ID", "")
@@ -282,6 +286,7 @@ def validate_manifest(repo_root: Path, manifest_path: Path, default_engine_overr
         },
         "notify": {
             "mode": notify_mode,
+            "agent_id": agent_id,
             "openclaw_event_mode": openclaw_event_mode,
             "telegram_target": telegram_target,
             "telegram_thread_id": telegram_thread_id,
@@ -354,12 +359,154 @@ def _run_notify_cmd(args: list[str], channel: str) -> None:
         print(f"[swarm-notify] ERROR: {channel} send failed (exit {result.returncode}): {stderr_snippet}", file=sys.stderr)
 
 
-def notify(state: dict, text: str) -> None:
-    mode = state.get("notify", {}).get("mode", "openclaw_event")
-    if mode == "none":
-        return
+def _task_duration(task: dict) -> str:
+    started = task.get("started_at")
+    completed = task.get("completed_at")
+    if not started or not completed:
+        return "—"
+    try:
+        s = datetime.fromisoformat(started)
+        e = datetime.fromisoformat(completed)
+        delta = int((e - s).total_seconds())
+        if delta < 60:
+            return f"{delta}s"
+        if delta < 3600:
+            return f"{delta // 60}m{delta % 60}s"
+        return f"{delta // 3600}h{(delta % 3600) // 60}m"
+    except Exception:
+        return "—"
 
-    if mode in {"openclaw_event", "both"} and command_exists("openclaw"):
+
+def _notify_context(state: dict) -> str:
+    """Build a notify context string for action tags so the Agent knows how to reach the user."""
+    parts: list[str] = []
+    notify = state.get("notify", {})
+    feishu_target = notify.get("feishu_target")
+    feishu_account = notify.get("feishu_account_id")
+    if feishu_target and feishu_account:
+        parts.append(f"feishu_target={feishu_target}")
+        parts.append(f"feishu_account={feishu_account}")
+    telegram_target = notify.get("telegram_target")
+    if telegram_target:
+        parts.append(f"telegram_target={telegram_target}")
+    return " ".join(parts)
+
+
+def _format_task_started(repo_slug: str, task: dict, retry: bool) -> str:
+    lines = [f"▶️ **Swarm {repo_slug}** — 任务启动"]
+    lines.append(f"  任务: `{task['id']}` — {task.get('description', '')}")
+    lines.append(f"  分支: `{task.get('branch', '—')}`")
+    lines.append(f"  引擎: {task.get('engine', '—')} / {task.get('model', '—')}")
+    if retry:
+        lines.append(f"  重试: {task.get('restart_count', 0)}/{task.get('max_restarts', 0)}")
+    else:
+        lines.append(f"  尝试: 第 {task.get('attempt_count', 1)} 次")
+    lines.append("")
+    lines.append(f"[action:ack task_id={task['id']}]")
+    return "\n".join(lines)
+
+
+def _format_task_done(repo_slug: str, task: dict, repo_root: str = "", ctx: str = "") -> str:
+    duration = _task_duration(task)
+    lines = [f"✅ **Swarm {repo_slug}** — 任务完成"]
+    lines.append(f"  任务: `{task['id']}` — {task.get('description', '')}")
+    lines.append(f"  分支: `{task.get('branch', '—')}`")
+    lines.append(f"  耗时: {duration}")
+    lines.append("")
+    tag = (
+        f"[action:review task_id={task['id']}"
+        f" branch={task.get('branch', '')}"
+        f" prompt_file={task.get('prompt_ref', task.get('prompt_file', ''))}"
+        f" repo_root={repo_root}"
+    )
+    if ctx:
+        tag += f" {ctx}"
+    tag += "]"
+    lines.append(tag)
+    return "\n".join(lines)
+
+
+def _format_task_failed(repo_slug: str, task: dict, repo_root: str = "", ctx: str = "") -> str:
+    duration = _task_duration(task)
+    lines = [f"❌ **Swarm {repo_slug}** — 任务失败"]
+    lines.append(f"  任务: `{task['id']}` — {task.get('description', '')}")
+    lines.append(f"  分支: `{task.get('branch', '—')}`")
+    lines.append(f"  耗时: {duration}")
+    lines.append(f"  原因: {task.get('note', '—')}")
+    lines.append("")
+    tag = (
+        f"[action:escalate task_id={task['id']}"
+        f" branch={task.get('branch', '')}"
+        f" retries_used={task.get('restart_count', 0)}"
+        f" max_retries={task.get('max_restarts', 0)}"
+        f" repo_root={repo_root}"
+    )
+    if ctx:
+        tag += f" {ctx}"
+    tag += "]"
+    lines.append(tag)
+    return "\n".join(lines)
+
+
+def _format_summary(state: dict) -> str:
+    repo_slug = state["repo_slug"]
+    repo_root = state.get("repo_root", "")
+    base_branch = state.get("defaults", {}).get("base_branch", "main")
+    ctx = _notify_context(state)
+    tasks = state.get("tasks", [])
+    done = [t for t in tasks if t["status"] == "done"]
+    failed = [t for t in tasks if t["status"] == "failed"]
+    lines = [f"🏁 **Swarm {repo_slug}** — 全部完成"]
+    lines.append(f"  结果: {len(done)} 成功, {len(failed)} 失败")
+    lines.append("")
+    for t in tasks:
+        icon = "✅" if t["status"] == "done" else "❌"
+        duration = _task_duration(t)
+        lines.append(f"  {icon} `{t['id']}` ({duration}) → `{t.get('branch', '—')}`")
+    if done:
+        branches = [t.get("branch", "") for t in done if t.get("branch")]
+        if branches:
+            lines.append("")
+            lines.append("  待合并分支:")
+            for b in branches:
+                lines.append(f"    • `{b}`")
+    done_branches = ",".join(t.get("branch", "") for t in done if t.get("branch"))
+    lines.append("")
+    tag = (
+        f"[action:merge"
+        f" repo_root={repo_root}"
+        f" base_branch={base_branch}"
+        f" branches={done_branches}"
+        f" done_count={len(done)}"
+        f" failed_count={len(failed)}"
+    )
+    if ctx:
+        tag += f" {ctx}"
+    tag += "]"
+    lines.append(tag)
+    return "\n".join(lines)
+
+
+def notify(state: dict, text: str) -> None:
+    mode = state.get("notify", {}).get("mode", "none")
+
+    # Always notify the dispatching Agent (regardless of mode)
+    agent_id = state.get("notify", {}).get("agent_id")
+    if agent_id and command_exists("openclaw"):
+        _run_notify_cmd(
+            [
+                "openclaw",
+                "agent",
+                "--agent",
+                agent_id,
+                "--message",
+                text,
+                "--json",
+            ],
+            f"agent:{agent_id}",
+        )
+    elif command_exists("openclaw"):
+        # Fallback: fire a system event (no specific agent targeted)
         _run_notify_cmd(
             [
                 "openclaw",
@@ -372,6 +519,10 @@ def notify(state: dict, text: str) -> None:
             ],
             "openclaw_event",
         )
+
+    # Human-facing channels (controlled by SWARM_NOTIFY_MODE)
+    if mode == "none":
+        return
 
     target = state.get("notify", {}).get("telegram_target")
     if mode in {"telegram", "both"} and target and command_exists("openclaw"):
@@ -416,15 +567,17 @@ def notify(state: dict, text: str) -> None:
 def notification_lines_for_transitions(before: dict[str, str], after_state: dict) -> list[str]:
     lines: list[str] = []
     repo_slug = after_state["repo_slug"]
+    repo_root = after_state.get("repo_root", "")
+    ctx = _notify_context(after_state)
     for task in after_state.get("tasks", []):
         previous = before.get(task["id"])
         current = task["status"]
         if previous == current:
             continue
         if current == "done":
-            lines.append(f"✅ Swarm {repo_slug} task {task['id']} done.")
+            lines.append(_format_task_done(repo_slug, task, repo_root, ctx))
         elif current == "failed":
-            lines.append(f"❌ Swarm {repo_slug} task {task['id']} failed: {task['note']}")
+            lines.append(_format_task_failed(repo_slug, task, repo_root, ctx))
     return lines
 
 
@@ -504,9 +657,10 @@ def start_task(repo_root: Path, state_path: Path, task_id: str, retry: bool) -> 
         raise SystemExit(f"Failed to launch tmux session {task['session_name']}: {(launch.stderr or launch.stdout).strip()}")
 
     repo_slug = slugify(repo_root.name, "repo")
-    if retry:
-        return f"🔁 Swarm {repo_slug} task {task_id} retry {task['restart_count']}/{task['max_restarts']} started."
-    return f"▶️ Swarm {repo_slug} task {task_id} started (attempt {attempt_number})."
+    with locked_state_file(state_path):
+        refreshed = load_state(state_path)
+        refreshed_task = task_map(refreshed).get(task_id, task)
+    return _format_task_started(repo_slug, refreshed_task, retry=retry)
 
 
 def cmd_init_run(args: argparse.Namespace) -> int:
@@ -629,10 +783,7 @@ def cmd_monitor_once(args: argparse.Namespace) -> int:
         notifications.extend(notification_lines_for_transitions(before, state))
         all_terminal = all(task["status"] in TERMINAL_STATUSES for task in state.get("tasks", []))
         if all_terminal and not state["notify"].get("all_terminal_notified_at"):
-            done_count = sum(1 for task in state["tasks"] if task["status"] == "done")
-            failed_count = sum(1 for task in state["tasks"] if task["status"] == "failed")
-            summary = f"🏁 Swarm {state['repo_slug']} finished: {done_count} done, {failed_count} failed."
-            notifications.append(summary)
+            notifications.append(_format_summary(state))
             state["notify"]["all_terminal_notified_at"] = now_iso()
             update_state_timestamp(state)
             write_json(state_path, state)

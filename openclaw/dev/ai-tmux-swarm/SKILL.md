@@ -87,27 +87,43 @@ tmux ls | grep openclaw-
 
 ## 通知
 
-通过 `SWARM_NOTIFY_MODE` 控制通知渠道：
+通知分两层：
+
+1. **Agent 感知**（始终开启）：每次状态变化都通知派发任务的 OpenClaw Agent，使其能感知进度并决定下一步操作（合并分支、跑验收等）。
+2. **人的通知**（可选）：通过 `SWARM_NOTIFY_MODE` 控制发送给人的渠道。
+
+### Agent 感知
+
+通过 `SWARM_AGENT_ID` 指定接收通知的 Agent：
+
+```env
+# 指定哪个 Agent 派发了这个 swarm（如 foreman）
+# 状态变化时通过 `openclaw agent --agent <id>` 投递
+SWARM_AGENT_ID=foreman
+```
+
+若 `SWARM_AGENT_ID` 为空，回退到 `openclaw system event`。
+
+### 人的通知
 
 | 模式 | 行为 |
 |---|---|
-| `openclaw_event`（默认） | 仅发送 OpenClaw system event |
-| `telegram` | 仅发送到 Telegram |
-| `feishu` | 仅发送到飞书/Lark |
-| `both` | 同时发送到 openclaw_event + Telegram + 飞书（需各自配置 target） |
-| `none` | 不发送任何通知 |
-
-在 `.swarm/config.env` 中配置对应渠道的 target：
+| `none`（默认） | 仅 Agent 感知，不发人的通知 |
+| `telegram` | 同时发送到 Telegram |
+| `feishu` | 同时发送到飞书/Lark |
+| `both` | 同时发送到 Telegram + 飞书 |
 
 ```env
 # Telegram
 TELEGRAM_CHAT_ID=
 TELEGRAM_THREAD_ID=
 
-# 飞书/Lark
-FEISHU_CHAT_ID=
-FEISHU_ACCOUNT_ID=
+# 飞书/Lark（FEISHU_ACCOUNT_ID 必填）
+FEISHU_CHAT_ID=oc_xxx 或 user:openId
+FEISHU_ACCOUNT_ID=foreman
 ```
+
+通知消息包含任务描述、分支名、耗时等结构化信息，全部完成时附带待合并分支列表。
 
 - `start_all.sh` 的 `chat-id` 位置参数只作为 Telegram fallback 的运行时覆盖值。
 - 飞书通知依赖 `openclaw message send --channel feishu`；若 `openclaw` CLI 不可用则静默跳过。
