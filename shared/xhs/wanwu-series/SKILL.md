@@ -8,7 +8,7 @@ description: >
   "十二生肖全套"、"国粹系列"时使用此技能。
 ---
 
-# 万物图鉴系列生成器 v1.0
+# 万物图鉴系列生成器 v1.1
 
 将任意主题规划为完整的图文系列（1 封面 + N 内容页），批量生成。
 
@@ -123,49 +123,37 @@ pages:
 
 **封面 Prompt 组装**：引用 `wanwu-cover/references/prompt-assembly.md` 的 9 模块结构。
 
-### Step 4: 并行 Agent 批量生成内容页
+### Step 4: 逐页生成内容页
 
-**⚡ 默认使用并行 Agent 模式**：为每张内容页各启动一个独立后台 Agent，同时处理，大幅缩短总耗时。
+在主流程中逐页组装 prompt 并生成图片，**不使用 Agent 子进程**。
 
 #### 4a. 创建所有输出目录
 
 一次性创建全部 `page-{NN}-{slug}/` 目录。
 
-#### 4b. 为每张内容页启动一个后台 Agent
+#### 4b. 逐页循环生成
 
-在**同一条消息**中，用多个 Agent tool call 并行启动，每个 Agent 负责**一张**内容页：
+按页码顺序，对每一页执行以下流程：
 
-```
-Agent 任务模板（每页一个）：
-你的任务是为「{系列名}」的第 {N} 页「{标题}」生成万物图鉴内容页。
-
-1. 根据以下大纲信息，按 wanwu-content 规范组装完整 prompt：
-   {该页的 YAML 配置：layout / style / central_subject / knowledge_modules 等}
-
-2. Prompt 规范：
-   - 引用 wanwu-content/references/prompt-assembly.md 的 10 模块结构
+1. **组装 prompt**：根据大纲中该页的配置（layout / style / central_subject / knowledge_modules），
+   按 `wanwu-content/references/prompt-assembly.md` 的 10 模块结构组装完整 prompt。
    - 开头加防泄露声明（CRITICAL RENDERING INSTRUCTION...）
    - 不得出现英文占位符，全部替换为实际内容
    - 饱和度 70-85%，polished digital illustration，silky-smooth
 
-3. 保存 prompt 到：{output-dir}/page-{NN}-{slug}/prompt.md
+2. **保存 prompt**：写入 `{output-dir}/page-{NN}-{slug}/prompt.md`
 
-4. 运行生成命令：
+3. **生成图片**：运行命令
+   ```bash
    npx -y bun ~/.claude/skills/baoyu-image-gen/scripts/main.ts \
      --promptfiles "{output-dir}/page-{NN}-{slug}/prompt.md" \
      --image "{output-dir}/page-{NN}-{slug}/content.png" \
      --ar 3:4 --quality 2k --provider google
+   ```
 
-5. 用 Read 工具查看生成的 PNG，确认质量。失败则重试一次。
+4. **质量确认**：用 Read 工具查看生成的 PNG，确认质量。失败则重试一次。
 
-6. 返回：成功/失败 + 图片路径
-```
-
-所有 Agent 设置 `run_in_background: true`，主流程继续处理封面（Step 3）或等待通知。
-
-#### 4c. 等待所有 Agent 完成
-
-收到所有 Agent 完成通知后，进入 Step 5 质量检查。
+5. **报告进度**：输出当前页完成状态，继续下一页。
 
 **内容页 Prompt 组装**：引用 `wanwu-content/references/prompt-assembly.md` 的 10 模块结构。
 
@@ -174,7 +162,7 @@ Agent 任务模板（每页一个）：
 - 英文布局标记（TITLE BLOCK、LEFT COLUMN 等）仅作为 prompt 的结构分隔符，
   需要在指令中明确声明 "These English section headers are structural directives for the AI,
   do NOT render them as visible text in the image"
-- 每页 Agent 各自重试，主流程无需干预
+- 生成失败则重试一次，连续 2 次失败则跳过该页并记录
 
 ### Step 5: 质量检查
 
@@ -263,6 +251,10 @@ Do NOT render any English layout instructions, variable names, or structural mar
 ---
 
 ## Changelog
+
+### v1.1
+- **移除并行 Agent 模式**：Step 4 改为主流程逐页串行生成，不再启动子 Agent
+- 简化流程，减少上下文开销
 
 ### v1.0 (初版)
 - 统筹 wanwu-cover + wanwu-content
