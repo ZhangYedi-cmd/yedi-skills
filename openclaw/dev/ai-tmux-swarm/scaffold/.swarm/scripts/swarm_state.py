@@ -347,13 +347,20 @@ def ensure_worktree(repo_root: Path, task: dict) -> None:
         raise RuntimeError((result.stderr or result.stdout or "git worktree add failed").strip())
 
 
+def _run_notify_cmd(args: list[str], channel: str) -> None:
+    result = subprocess.run(args, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        stderr_snippet = (result.stderr or result.stdout or "unknown error").strip()[:200]
+        print(f"[swarm-notify] ERROR: {channel} send failed (exit {result.returncode}): {stderr_snippet}", file=sys.stderr)
+
+
 def notify(state: dict, text: str) -> None:
     mode = state.get("notify", {}).get("mode", "openclaw_event")
     if mode == "none":
         return
 
     if mode in {"openclaw_event", "both"} and command_exists("openclaw"):
-        subprocess.run(
+        _run_notify_cmd(
             [
                 "openclaw",
                 "system",
@@ -363,9 +370,7 @@ def notify(state: dict, text: str) -> None:
                 "--mode",
                 state["notify"].get("openclaw_event_mode", "now"),
             ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
+            "openclaw_event",
         )
 
     target = state.get("notify", {}).get("telegram_target")
@@ -384,25 +389,28 @@ def notify(state: dict, text: str) -> None:
         thread_id = state["notify"].get("telegram_thread_id")
         if thread_id:
             args.extend(["--thread-id", thread_id])
-        subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        _run_notify_cmd(args, "telegram")
 
     feishu_target = state.get("notify", {}).get("feishu_target")
     if mode in {"feishu", "both"} and feishu_target and command_exists("openclaw"):
-        feishu_args = [
-            "openclaw",
-            "message",
-            "send",
-            "--channel",
-            "feishu",
-            "--target",
-            feishu_target,
-            "--message",
-            text,
-        ]
         feishu_account = state["notify"].get("feishu_account_id")
-        if feishu_account:
-            feishu_args.extend(["--account", feishu_account])
-        subprocess.run(feishu_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        if not feishu_account:
+            print("[swarm-notify] WARNING: FEISHU_CHAT_ID is set but FEISHU_ACCOUNT_ID is empty — skipping Feishu notification (default account has no credentials)", file=sys.stderr)
+        else:
+            feishu_args = [
+                "openclaw",
+                "message",
+                "send",
+                "--channel",
+                "feishu",
+                "--target",
+                feishu_target,
+                "--account",
+                feishu_account,
+                "--message",
+                text,
+            ]
+            _run_notify_cmd(feishu_args, "feishu")
 
 
 def notification_lines_for_transitions(before: dict[str, str], after_state: dict) -> list[str]:

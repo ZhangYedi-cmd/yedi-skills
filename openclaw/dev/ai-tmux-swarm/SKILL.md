@@ -87,9 +87,30 @@ tmux ls | grep openclaw-
 
 ## 通知
 
-- 默认通知模式是 `SWARM_NOTIFY_MODE=openclaw_event`。
-- 只有在 `SWARM_NOTIFY_MODE=telegram|both` 时，才会直发 Telegram。
+通过 `SWARM_NOTIFY_MODE` 控制通知渠道：
+
+| 模式 | 行为 |
+|---|---|
+| `openclaw_event`（默认） | 仅发送 OpenClaw system event |
+| `telegram` | 仅发送到 Telegram |
+| `feishu` | 仅发送到飞书/Lark |
+| `both` | 同时发送到 openclaw_event + Telegram + 飞书（需各自配置 target） |
+| `none` | 不发送任何通知 |
+
+在 `.swarm/config.env` 中配置对应渠道的 target：
+
+```env
+# Telegram
+TELEGRAM_CHAT_ID=
+TELEGRAM_THREAD_ID=
+
+# 飞书/Lark
+FEISHU_CHAT_ID=
+FEISHU_ACCOUNT_ID=
+```
+
 - `start_all.sh` 的 `chat-id` 位置参数只作为 Telegram fallback 的运行时覆盖值。
+- 飞书通知依赖 `openclaw message send --channel feishu`；若 `openclaw` CLI 不可用则静默跳过。
 
 ## Claude 日志
 
