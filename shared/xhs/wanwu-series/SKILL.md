@@ -8,7 +8,7 @@ description: >
   "十二生肖全套"、"国粹系列"时使用此技能。
 ---
 
-# 万物图鉴系列生成器 v1.1
+# 万物图鉴系列生成器 v1.2
 
 将任意主题规划为完整的图文系列（1 封面 + N 内容页），批量生成。
 
@@ -48,8 +48,8 @@ description: >
 万物图鉴系列 进度：
 - [ ] Step 1: 系列规划 — 主题分析 + 总页数 + 每页概要
 - [ ] Step 2: 确认大纲 ⚠️ REQUIRED
-- [ ] Step 3: 生成封面
-- [ ] Step 4: 批量生成内容页（逐页）
+- [ ] Step 3: 批量组装全部 Prompt（封面 + 内容页）
+- [ ] Step 4: 逐张生成图片（封面 → 内容页）
 - [ ] Step 5: 质量检查
 - [ ] Step 6: 完成报告
 ```
@@ -113,37 +113,70 @@ pages:
 
 **大纲确认后**，将完整大纲保存至 `{output-dir}/series-outline.md`。
 
-### Step 3: 生成封面
+### Step 3: 批量组装全部 Prompt（先写后画）
 
-按 `wanwu-cover` 的视觉规范和 prompt 组装逻辑：
-1. 根据大纲中的 cover 配置组装封面 prompt
-2. 保存 prompt 至 `{output-dir}/cover/prompt.md`
-3. 调用图片生成技能
-4. 输出至 `{output-dir}/cover/cover.png`
+**先把所有 prompt 写好，再统一生成图片。** 分两阶段执行。
 
-**封面 Prompt 组装**：引用 `wanwu-cover/references/prompt-assembly.md` 的 9 模块结构。
+#### 3a. 创建所有输出目录
 
-### Step 4: 逐页生成内容页
+一次性创建 `cover/` 和全部 `page-{NN}-{slug}/` 目录。
 
-在主流程中逐页组装 prompt 并生成图片，**不使用 Agent 子进程**。
+#### 3b. 组装封面 Prompt
 
-#### 4a. 创建所有输出目录
+按 `wanwu-cover/references/prompt-assembly.md` 的 9 模块结构组装封面 prompt，
+保存至 `{output-dir}/cover/prompt.md`。
 
-一次性创建全部 `page-{NN}-{slug}/` 目录。
+#### 3c. 逐页组装内容页 Prompt
 
-#### 4b. 逐页循环生成
+按页码顺序，对每一页：
 
-按页码顺序，对每一页执行以下流程：
-
-1. **组装 prompt**：根据大纲中该页的配置（layout / style / central_subject / knowledge_modules），
+1. 根据大纲中该页的配置（layout / style / central_subject / knowledge_modules），
    按 `wanwu-content/references/prompt-assembly.md` 的 10 模块结构组装完整 prompt。
    - 开头加防泄露声明（CRITICAL RENDERING INSTRUCTION...）
    - 不得出现英文占位符，全部替换为实际内容
    - 饱和度 70-85%，polished digital illustration，silky-smooth
 
-2. **保存 prompt**：写入 `{output-dir}/page-{NN}-{slug}/prompt.md`
+2. 保存至 `{output-dir}/page-{NN}-{slug}/prompt.md`
 
-3. **生成图片**：运行命令
+#### 3d. 输出 Prompt 清单
+
+所有 prompt 写完后，输出清单供用户确认：
+
+```
+Prompt 已全部就绪：
+✓ cover/prompt.md（封面）
+✓ page-01-xxx/prompt.md（第1页）
+✓ page-02-xxx/prompt.md（第2页）
+...
+共 {N+1} 个 prompt，准备开始生成图片。
+```
+
+**重要**：
+- Prompt 中不要出现英文占位符（MODULE L1、SECTION B1 等），全部替换为实际内容
+- 英文布局标记（TITLE BLOCK、LEFT COLUMN 等）仅作为 prompt 的结构分隔符，
+  需要在指令中明确声明 "These English section headers are structural directives for the AI,
+  do NOT render them as visible text in the image"
+
+### Step 4: 逐张生成图片
+
+Prompt 全部就绪后，按顺序逐张生成图片。**不使用 Agent 子进程**。
+
+#### 4a. 生成封面
+
+```bash
+npx -y bun ~/.claude/skills/baoyu-image-gen/scripts/main.ts \
+  --promptfiles "{output-dir}/cover/prompt.md" \
+  --image "{output-dir}/cover/cover.png" \
+  --ar 3:4 --quality 2k --provider google
+```
+
+用 Read 工具查看生成的 PNG，确认质量。
+
+#### 4b. 逐页生成内容页
+
+按页码顺序，对每一页：
+
+1. 运行生成命令：
    ```bash
    npx -y bun ~/.claude/skills/baoyu-image-gen/scripts/main.ts \
      --promptfiles "{output-dir}/page-{NN}-{slug}/prompt.md" \
@@ -151,18 +184,11 @@ pages:
      --ar 3:4 --quality 2k --provider google
    ```
 
-4. **质量确认**：用 Read 工具查看生成的 PNG，确认质量。失败则重试一次。
+2. 用 Read 工具查看生成的 PNG，确认质量。失败则重试一次。
 
-5. **报告进度**：输出当前页完成状态，继续下一页。
+3. 报告进度，继续下一页。
 
-**内容页 Prompt 组装**：引用 `wanwu-content/references/prompt-assembly.md` 的 10 模块结构。
-
-**重要**：
-- Prompt 中不要出现英文占位符（MODULE L1、SECTION B1 等），全部替换为实际内容
-- 英文布局标记（TITLE BLOCK、LEFT COLUMN 等）仅作为 prompt 的结构分隔符，
-  需要在指令中明确声明 "These English section headers are structural directives for the AI,
-  do NOT render them as visible text in the image"
-- 生成失败则重试一次，连续 2 次失败则跳过该页并记录
+生成失败则重试一次，连续 2 次失败则跳过该页并记录。
 
 ### Step 5: 质量检查
 
@@ -251,6 +277,10 @@ Do NOT render any English layout instructions, variable names, or structural mar
 ---
 
 ## Changelog
+
+### v1.2
+- **先写后画**：Step 3 先批量组装全部 Prompt（封面+所有内容页），Step 4 再逐张生成图片
+- 分离文案创作与图片生成两个阶段，便于在生成前统一审查/调整 prompt
 
 ### v1.1
 - **移除并行 Agent 模式**：Step 4 改为主流程逐页串行生成，不再启动子 Agent
