@@ -413,12 +413,7 @@ def _format_task_done(repo_slug: str, task: dict, repo_root: str = "", ctx: str 
     lines.append(f"  分支: `{task.get('branch', '—')}`")
     lines.append(f"  耗时: {duration}")
     lines.append("")
-    tag = (
-        f"[action:review task_id={task['id']}"
-        f" branch={task.get('branch', '')}"
-        f" prompt_file={task.get('prompt_ref', task.get('prompt_file', ''))}"
-        f" repo_root={repo_root}"
-    )
+    tag = f"[action:done task_id={task['id']}"
     if ctx:
         tag += f" {ctx}"
     tag += "]"
@@ -470,6 +465,11 @@ def _format_summary(state: dict) -> str:
             lines.append("  待合并分支:")
             for b in branches:
                 lines.append(f"    • `{b}`")
+    # Build review_tasks list: each done task's review info for batch Reviewer dispatch
+    review_items = []
+    for t in done:
+        prompt = t.get("prompt_ref", t.get("prompt_file", ""))
+        review_items.append(f"{t['id']}:{t.get('branch', '')}:{prompt}")
     done_branches = ",".join(t.get("branch", "") for t in done if t.get("branch"))
     lines.append("")
     tag = (
@@ -479,6 +479,7 @@ def _format_summary(state: dict) -> str:
         f" branches={done_branches}"
         f" done_count={len(done)}"
         f" failed_count={len(failed)}"
+        f" review_tasks={','.join(review_items)}"
     )
     if ctx:
         tag += f" {ctx}"
