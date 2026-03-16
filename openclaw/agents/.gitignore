@@ -1,0 +1,12 @@
+# Credentials
+auth-profiles.json
+auth.json
+
+# Runtime state
+HEARTBEAT.md
+.openclaw/
+.claude/
+sessions/
+
+# Nested git repos
+**/.git/
