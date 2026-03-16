@@ -46,9 +46,9 @@ def tracked_skill_files() -> List[Path]:
 def iter_skills() -> List[Skill]:
     skills: List[Skill] = []
 
-    candidates = tracked_skill_files()
-    if not candidates:
-        candidates = list(ROOT.rglob("SKILL.md"))
+    tracked = tracked_skill_files()
+    discovered = list(ROOT.rglob("SKILL.md"))
+    candidates = sorted({*tracked, *discovered})
 
     for skill_md in candidates:
         rel = skill_md.relative_to(ROOT)
