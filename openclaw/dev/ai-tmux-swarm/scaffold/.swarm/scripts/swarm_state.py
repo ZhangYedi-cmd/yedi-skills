@@ -22,6 +22,34 @@ DEFAULT_MODELS = {
     "claude": "claude-sonnet-4-6",
 }
 
+# ---------------------------------------------------------------------------
+# Unified logging
+# ---------------------------------------------------------------------------
+_LOG_LEVELS = {"DEBUG": 0, "INFO": 1, "WARN": 2, "ERROR": 3}
+_CURRENT_LOG_LEVEL = _LOG_LEVELS.get(
+    os.environ.get("SWARM_LOG_LEVEL", "INFO").upper(), 1
+)
+
+
+def _log(level: str, component: str, msg: str) -> None:
+    """Unified log: [ts] [component] [LEVEL] msg"""
+    if _LOG_LEVELS.get(level, 1) < _CURRENT_LOG_LEVEL:
+        return
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{ts}] [{component}] [{level}] {msg}", flush=True)
+
+
+def _log_notification(repo_root_str: str, text: str) -> None:
+    """Append full notification content to logs/notifications.log."""
+    try:
+        log_dir = Path(repo_root_str) / ".swarm" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with (log_dir / "notifications.log").open("a", encoding="utf-8") as f:
+            f.write(f"--- [{ts}] ---\n{text}\n\n")
+    except Exception:
+        pass
+
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -336,10 +364,12 @@ def resolve_base_ref(repo_root: Path, base_branch: str) -> str:
 def ensure_worktree(repo_root: Path, task: dict) -> None:
     workdir = Path(task["workdir"])
     if workdir.exists():
+        _log("DEBUG", "worktree", f"already exists: {workdir}")
         return
 
     workdir.parent.mkdir(parents=True, exist_ok=True)
     branch = task["branch"]
+    _log("INFO", "worktree", f"creating worktree branch={branch} at {workdir}")
     base_ref = resolve_base_ref(repo_root, task["base_branch"])
 
     branch_exists = run_command(["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"], cwd=repo_root).returncode == 0
@@ -349,14 +379,22 @@ def ensure_worktree(repo_root: Path, task: dict) -> None:
         result = run_command(["git", "worktree", "add", "-b", branch, str(workdir), base_ref], cwd=repo_root)
 
     if result.returncode != 0:
-        raise RuntimeError((result.stderr or result.stdout or "git worktree add failed").strip())
+        err = (result.stderr or result.stdout or "git worktree add failed").strip()
+        _log("ERROR", "worktree", f"failed for {task['id']}: {err}")
+        raise RuntimeError(err)
+    _log("INFO", "worktree", f"ready: {workdir}")
 
 
 def _run_notify_cmd(args: list[str], channel: str) -> None:
+    cmd_display = " ".join(args[:4]) + " ..."
+    _log("INFO", "notify", f"-> {channel}: {cmd_display}")
     result = subprocess.run(args, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         stderr_snippet = (result.stderr or result.stdout or "unknown error").strip()[:200]
-        print(f"[swarm-notify] ERROR: {channel} send failed (exit {result.returncode}): {stderr_snippet}", file=sys.stderr)
+        _log("ERROR", "notify", f"{channel} send failed (exit {result.returncode}): {stderr_snippet}")
+    else:
+        stdout_snippet = (result.stdout or "").strip()[:200]
+        _log("DEBUG", "notify", f"{channel} OK (exit 0){': ' + stdout_snippet if stdout_snippet else ''}")
 
 
 def _task_duration(task: dict) -> str:
@@ -490,6 +528,11 @@ def _format_summary(state: dict) -> str:
 
 def notify(state: dict, text: str) -> None:
     mode = state.get("notify", {}).get("mode", "none")
+    summary = text.split("\n")[0][:80] if text else "(empty)"
+    _log("INFO", "notify", f"sending: {summary}")
+
+    # Persist full notification content to notifications.log
+    _log_notification(state.get("repo_root", ""), text)
 
     # Always notify the dispatching Agent (regardless of mode)
     agent_id = state.get("notify", {}).get("agent_id")
@@ -547,7 +590,7 @@ def notify(state: dict, text: str) -> None:
     if mode in {"feishu", "both"} and feishu_target and command_exists("openclaw"):
         feishu_account = state["notify"].get("feishu_account_id")
         if not feishu_account:
-            print("[swarm-notify] WARNING: FEISHU_CHAT_ID is set but FEISHU_ACCOUNT_ID is empty — skipping Feishu notification (default account has no credentials)", file=sys.stderr)
+            _log("WARN", "notify", "FEISHU_CHAT_ID set but FEISHU_ACCOUNT_ID empty — skipping Feishu")
         else:
             feishu_args = [
                 "openclaw",
@@ -583,20 +626,25 @@ def notification_lines_for_transitions(before: dict[str, str], after_state: dict
 
 
 def start_task(repo_root: Path, state_path: Path, task_id: str, retry: bool) -> str:
+    _log("INFO", "start-task", f"task={task_id} retry={retry}")
     with locked_state_file(state_path):
         state = load_state(state_path)
         tasks = task_map(state)
         task = tasks.get(task_id)
         if task is None:
+            _log("ERROR", "start-task", f"unknown task id: {task_id}")
             raise SystemExit(f"Unknown task id: {task_id}")
         if task["status"] in TERMINAL_STATUSES:
+            _log("WARN", "start-task", f"task {task_id} already terminal ({task['status']})")
             raise SystemExit(f"Task already terminal: {task_id}")
         if has_tmux_session(task["session_name"]):
+            _log("WARN", "start-task", f"tmux session already exists: {task['session_name']}")
             raise SystemExit(f"tmux session already exists: {task['session_name']}")
 
         try:
             ensure_worktree(repo_root, task)
         except Exception as exc:
+            _log("ERROR", "start-task", f"worktree setup failed for {task_id}: {exc}")
             task["status"] = "failed"
             task["completed_at"] = now_iso()
             task["updated_at"] = now_iso()
@@ -623,6 +671,7 @@ def start_task(repo_root: Path, state_path: Path, task_id: str, retry: bool) -> 
             task["note"] = f"Attempt {attempt_number} launched"
         update_state_timestamp(state)
         write_json(state_path, state)
+        _log("INFO", "start-task", f"task {task_id} -> running (attempt {attempt_number})")
 
     run_task_path = (repo_root / ".swarm" / "scripts" / "run_task.sh").resolve()
     cmd = [
@@ -638,12 +687,15 @@ def start_task(repo_root: Path, state_path: Path, task_id: str, retry: bool) -> 
         task["reasoning"],
     ]
 
+    _log("INFO", "start-task", f"launching tmux session {task['session_name']}")
     launch = subprocess.run(
         ["tmux", "new-session", "-d", "-s", task["session_name"], "-c", task["workdir"], " ".join(shlex.quote(part) for part in cmd)],
         text=True,
         capture_output=True,
     )
     if launch.returncode != 0:
+        err = (launch.stderr or launch.stdout or "tmux launch failed").strip()
+        _log("ERROR", "start-task", f"tmux launch failed for {task_id}: {err}")
         with locked_state_file(state_path):
             state = load_state(state_path)
             task = task_map(state)[task_id]
@@ -652,11 +704,12 @@ def start_task(repo_root: Path, state_path: Path, task_id: str, retry: bool) -> 
             task["updated_at"] = now_iso()
             task["last_exit_code"] = 125
             task["last_attempt_finished_at"] = now_iso()
-            task["note"] = (launch.stderr or launch.stdout or "tmux launch failed").strip()
+            task["note"] = err
             update_state_timestamp(state)
             write_json(state_path, state)
-        raise SystemExit(f"Failed to launch tmux session {task['session_name']}: {(launch.stderr or launch.stdout).strip()}")
+        raise SystemExit(f"Failed to launch tmux session {task['session_name']}: {err}")
 
+    _log("INFO", "start-task", f"task {task_id} tmux session started")
     repo_slug = slugify(repo_root.name, "repo")
     with locked_state_file(state_path):
         refreshed = load_state(state_path)
@@ -667,10 +720,18 @@ def start_task(repo_root: Path, state_path: Path, task_id: str, retry: bool) -> 
 def cmd_init_run(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
     manifest_path = resolve_path(repo_root, args.manifest or ".swarm/tasks.json")
-    state = validate_manifest(repo_root, manifest_path, args.default_engine, args.default_model, args.chat_id)
+    _log("INFO", "init-run", f"repo={repo_root} manifest={manifest_path}")
+    try:
+        state = validate_manifest(repo_root, manifest_path, args.default_engine, args.default_model, args.chat_id)
+    except SystemExit as exc:
+        _log("ERROR", "init-run", f"manifest validation failed: {exc}")
+        raise
+    task_ids = [t["id"] for t in state.get("tasks", [])]
+    _log("INFO", "init-run", f"validated {len(task_ids)} tasks: {', '.join(task_ids)} | engine={state['defaults']['engine']} model={state['defaults']['model']}")
     state_path = state_path_for(repo_root)
     with locked_state_file(state_path):
         write_json(state_path, state)
+    _log("INFO", "init-run", f"state written to {state_path}")
     print(state_path)
     return 0
 
@@ -678,7 +739,12 @@ def cmd_init_run(args: argparse.Namespace) -> int:
 def cmd_start_task(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
     state_path = state_path_for(repo_root)
-    message = start_task(repo_root, state_path, args.task_id, retry=args.retry)
+    _log("INFO", "cmd-start-task", f"task={args.task_id} retry={args.retry}")
+    try:
+        message = start_task(repo_root, state_path, args.task_id, retry=args.retry)
+    except SystemExit as exc:
+        _log("ERROR", "cmd-start-task", f"failed to start {args.task_id}: {exc}")
+        raise
     with locked_state_file(state_path):
         state = load_state(state_path)
     notify(state, message)
@@ -689,10 +755,12 @@ def cmd_start_task(args: argparse.Namespace) -> int:
 def cmd_record_exit(args: argparse.Namespace) -> int:
     state_path = Path(args.state).resolve()
     exit_code = int(args.exit_code)
+    _log("INFO", "record-exit", f"task={args.task_id} exit_code={exit_code}")
     with locked_state_file(state_path):
         state = load_state(state_path)
         tasks = task_map(state)
         if args.task_id not in tasks:
+            _log("ERROR", "record-exit", f"unknown task id: {args.task_id}")
             raise SystemExit(f"Unknown task id: {args.task_id}")
         task = tasks[args.task_id]
         task["last_exit_code"] = exit_code
@@ -704,6 +772,7 @@ def cmd_record_exit(args: argparse.Namespace) -> int:
             task["note"] = f"Last attempt exited with code {exit_code}"
         update_state_timestamp(state)
         write_json(state_path, state)
+    _log("INFO", "record-exit", f"task {args.task_id}: recorded exit_code={exit_code}")
     return 0
 
 
@@ -715,10 +784,15 @@ def cmd_monitor_once(args: argparse.Namespace) -> int:
     notifications: list[str] = []
     strict_errors: list[str] = []
 
+    _log("INFO", "monitor", "--- sweep start ---")
+
     with locked_state_file(state_path):
         state = load_state(state_path)
         before = {task["id"]: task["status"] for task in state.get("tasks", [])}
         tasks = task_map(state)
+
+        status_line = "  ".join(f"{t['id']}={t['status']}" for t in state.get("tasks", []))
+        _log("DEBUG", "monitor", f"snapshot: {status_line}")
 
         for task in state.get("tasks", []):
             if task["status"] in TERMINAL_STATUSES:
@@ -731,6 +805,7 @@ def cmd_monitor_once(args: argparse.Namespace) -> int:
                 task["completed_at"] = now_iso()
                 task["updated_at"] = now_iso()
                 task["note"] = f"Blocked by failed dependencies: {', '.join(failed_dependencies)}"
+                _log("WARN", "monitor", f"task {task['id']}: failed (blocked by {', '.join(failed_dependencies)})")
                 continue
 
             session_alive = has_tmux_session(task["session_name"])
@@ -739,6 +814,7 @@ def cmd_monitor_once(args: argparse.Namespace) -> int:
                 task["updated_at"] = now_iso()
                 if not task.get("note"):
                     task["note"] = f"Attempt {task['attempt_count']} running"
+                _log("DEBUG", "monitor", f"task {task['id']}: tmux alive, still running")
                 continue
 
             if task["status"] == "running":
@@ -747,37 +823,48 @@ def cmd_monitor_once(args: argparse.Namespace) -> int:
                     task["completed_at"] = now_iso()
                     task["updated_at"] = now_iso()
                     task["note"] = "Task completed successfully"
+                    _log("INFO", "monitor", f"task {task['id']}: running -> done (exit 0)")
                 elif int(task.get("restart_count", 0)) < int(task["max_restarts"]):
                     task["status"] = "retrying"
                     task["updated_at"] = now_iso()
                     task["note"] = f"Preparing retry {int(task['restart_count']) + 1}/{task['max_restarts']} after exit {task.get('last_exit_code', 'unknown')}"
                     launch_queue.append((task["id"], True))
+                    _log("WARN", "monitor", f"task {task['id']}: running -> retrying (exit {task.get('last_exit_code', '?')})")
                 else:
                     task["status"] = "failed"
                     task["completed_at"] = now_iso()
                     task["updated_at"] = now_iso()
                     task["note"] = f"Reached max restarts after exit {task.get('last_exit_code', 'unknown')}"
+                    _log("ERROR", "monitor", f"task {task['id']}: running -> failed (max restarts, exit {task.get('last_exit_code', '?')})")
             elif task["status"] == "retrying":
                 launch_queue.append((task["id"], True))
+                _log("INFO", "monitor", f"task {task['id']}: retrying, queued for relaunch")
             elif task["status"] == "pending":
                 waiting = [dep for dep in task["depends_on"] if tasks[dep]["status"] != "done"]
                 if not waiting:
                     launch_queue.append((task["id"], False))
+                    _log("INFO", "monitor", f"task {task['id']}: deps met, queued for launch")
                 else:
                     task["note"] = f"Waiting for dependencies: {', '.join(waiting)}"
                     task["updated_at"] = now_iso()
+                    _log("DEBUG", "monitor", f"task {task['id']}: pending, waiting on {', '.join(waiting)}")
 
         refresh_pending_notes(state)
         update_state_timestamp(state)
         write_json(state_path, state)
 
+    if launch_queue:
+        _log("INFO", "monitor", f"launching {len(launch_queue)} task(s): {', '.join(tid for tid, _ in launch_queue)}")
     for task_id, retry in launch_queue:
         try:
             notifications.append(start_task(repo_root, state_path, task_id, retry=retry))
+            _log("INFO", "monitor", f"task {task_id}: launched {'(retry)' if retry else '(first)'}")
         except SystemExit as exc:
             strict_errors.append(str(exc))
+            _log("ERROR", "monitor", f"task {task_id}: launch FAILED — {exc}")
         except Exception as exc:
             strict_errors.append(str(exc))
+            _log("ERROR", "monitor", f"task {task_id}: launch FAILED — {exc}")
 
     with locked_state_file(state_path):
         state = load_state(state_path)
@@ -788,13 +875,20 @@ def cmd_monitor_once(args: argparse.Namespace) -> int:
             state["notify"]["all_terminal_notified_at"] = now_iso()
             update_state_timestamp(state)
             write_json(state_path, state)
+            _log("INFO", "monitor", "all tasks terminal — summary notification queued")
 
     seen: set[str] = set()
+    notify_count = 0
     for line in notifications:
         if not line or line in seen:
             continue
         seen.add(line)
         notify(state, line)
+        notify_count += 1
+
+    after_line = "  ".join(f"{t['id']}={t['status']}" for t in state.get("tasks", []))
+    _log("INFO", "monitor", f"result: {after_line} | notifications={notify_count}")
+    _log("INFO", "monitor", "--- sweep end ---")
 
     if args.strict_launch and strict_errors:
         raise SystemExit("; ".join(strict_errors))
@@ -804,6 +898,7 @@ def cmd_monitor_once(args: argparse.Namespace) -> int:
 def cmd_all_terminal(args: argparse.Namespace) -> int:
     state = load_state(Path(args.state).resolve())
     all_terminal = all(task["status"] in TERMINAL_STATUSES for task in state.get("tasks", []))
+    _log("DEBUG", "all-terminal", f"result={all_terminal}")
     return 0 if all_terminal else 1
 
 

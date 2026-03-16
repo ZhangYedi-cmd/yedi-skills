@@ -17,12 +17,18 @@ REASONING="$8"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$REPO_ROOT/.swarm/config.env"
 
+swarm_log() {
+  local level="$1" component="$2" msg="$3"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$component] [$level] $msg"
+}
+
 record_exit() {
   local exit_code="$1"
+  swarm_log "INFO" "run-task" "recording exit: task=$TASK_ID code=$exit_code" | tee -a "$LOG_FILE"
   python3 "$SCRIPT_DIR/swarm_state.py" record-exit \
     --state "$STATE_PATH" \
     --task-id "$TASK_ID" \
-    --exit-code "$exit_code" >/dev/null 2>&1 || true
+    --exit-code "$exit_code" 2>&1 | tee -a "$LOG_FILE" || true
 }
 
 trap 'record_exit "$?"' EXIT
@@ -36,16 +42,16 @@ fi
 mkdir -p "$(dirname "$LOG_FILE")"
 
 if [[ ! -f "$PROMPT_FILE" ]]; then
-  echo "Prompt file not found: $PROMPT_FILE" | tee -a "$LOG_FILE"
+  swarm_log "ERROR" "run-task" "prompt file not found: $PROMPT_FILE" | tee -a "$LOG_FILE"
   exit 2
 fi
 
-START_TS="$(date '+%Y-%m-%d %H:%M:%S')"
-echo "[$START_TS] task=$TASK_ID engine=$ENGINE model=$MODEL reasoning=$REASONING" | tee -a "$LOG_FILE"
+swarm_log "INFO" "run-task" "task=$TASK_ID engine=$ENGINE model=$MODEL reasoning=$REASONING" | tee -a "$LOG_FILE"
 
 set +e
 case "$ENGINE" in
   codex)
+    swarm_log "INFO" "run-task" "launching codex CLI" | tee -a "$LOG_FILE"
     codex exec \
       --skip-git-repo-check \
       --model "$MODEL" \
@@ -84,7 +90,7 @@ case "$ENGINE" in
         fi
         ;;
       *)
-        echo "Unsupported SWARM_CLAUDE_LOG_FORMAT: $CLAUDE_LOG_FORMAT" | tee -a "$LOG_FILE"
+        swarm_log "ERROR" "run-task" "unsupported SWARM_CLAUDE_LOG_FORMAT: $CLAUDE_LOG_FORMAT" | tee -a "$LOG_FILE"
         exit 2
         ;;
     esac
@@ -101,20 +107,20 @@ case "$ENGINE" in
       fi
       if [[ "$CLAUDE_DEBUG_TO_FILE" == "1" ]]; then
         CLAUDE_ARGS+=(--debug-file "$CLAUDE_DEBUG_LOG_FILE")
-        echo "[$START_TS] claude_debug_log=$CLAUDE_DEBUG_LOG_FILE" | tee -a "$LOG_FILE"
+        swarm_log "DEBUG" "run-task" "claude debug log=$CLAUDE_DEBUG_LOG_FILE" | tee -a "$LOG_FILE"
       fi
     fi
 
+    swarm_log "INFO" "run-task" "launching claude CLI" | tee -a "$LOG_FILE"
     claude "${CLAUDE_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"
     EXIT_CODE=${PIPESTATUS[0]}
     ;;
   *)
-    echo "Unsupported engine: $ENGINE" | tee -a "$LOG_FILE"
+    swarm_log "ERROR" "run-task" "unsupported engine: $ENGINE" | tee -a "$LOG_FILE"
     EXIT_CODE=2
     ;;
 esac
 set -e
 
-END_TS="$(date '+%Y-%m-%d %H:%M:%S')"
-echo "[$END_TS] task=$TASK_ID exit_code=$EXIT_CODE" | tee -a "$LOG_FILE"
+swarm_log "INFO" "run-task" "task=$TASK_ID exit_code=$EXIT_CODE" | tee -a "$LOG_FILE"
 exit "$EXIT_CODE"

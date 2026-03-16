@@ -128,6 +128,51 @@ FEISHU_ACCOUNT_ID=foreman
 - `start_all.sh` 的 `chat-id` 位置参数只作为 Telegram fallback 的运行时覆盖值。
 - 飞书通知依赖 `openclaw message send --channel feishu`；若 `openclaw` CLI 不可用则静默跳过。
 
+## 日志系统
+
+所有组件使用统一日志格式：
+
+```
+[2026-03-16 17:03:00] [component] [LEVEL] message
+```
+
+### 日志级别
+
+通过 `SWARM_LOG_LEVEL` 环境变量控制（默认 `INFO`）：
+
+| 级别 | 说明 |
+|------|------|
+| `DEBUG` | 详细信息：状态快照、tmux 存活检查、worktree 复用、CLI 响应 |
+| `INFO` | 常规操作：任务启动/完成、状态转换、通知发送、cron 安装 |
+| `WARN` | 异常但可恢复：任务重试、依赖失败导致阻塞、feishu 配置缺失 |
+| `ERROR` | 操作失败：tmux 启动失败、worktree 创建失败、manifest 校验错误 |
+
+### 组件标识
+
+| 组件 | 来源 |
+|------|------|
+| `init-run` | `swarm_state.py` — manifest 校验与 state 初始化 |
+| `start-task` | `swarm_state.py` — worktree 创建、tmux 启动、状态写入 |
+| `record-exit` | `swarm_state.py` — 任务退出码记录 |
+| `monitor` | `swarm_state.py` — 状态轮询与调度 |
+| `notify` | `swarm_state.py` — 通知发送（Agent + 人的渠道） |
+| `worktree` | `swarm_state.py` — git worktree 操作 |
+| `all-terminal` | `swarm_state.py` — 终态检查 |
+| `run-task` | `run_task.sh` — 单个任务执行 |
+| `start-all` | `start_all.sh` — swarm 编排入口 |
+
+### 日志文件
+
+| 文件 | 内容 |
+|------|------|
+| `.swarm/logs/monitor.log` | 所有 monitor sweep + start_all 首次启动的日志 |
+| `.swarm/logs/<task>.log` | 单个任务的执行日志（引擎输出 + 启动/退出记录） |
+| `.swarm/logs/notifications.log` | 发给 Agent / 人的完整通知内容（全文存档） |
+| `.swarm/logs/<task>.claude-debug.log` | Claude debug 模式的详细日志（可选） |
+
+- `start_all.sh` 自动将输出 tee 到 `monitor.log`，首次启动日志不再丢失。
+- cron 模式的 `monitor.sh` 通过 `>> monitor.log 2>&1` 追加。
+
 ## Claude 日志
 
 - 默认会为 Claude 任务开启 `stream-json` 输出、partial messages 和 `--verbose`，方便在 tmux 和 `.swarm/logs/*.log` 里观察更细的执行流。

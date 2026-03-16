@@ -26,9 +26,26 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+swarm_log() {
+  local level="$1" component="$2" msg="$3"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$component] [$level] $msg"
+}
+
+swarm_log "INFO" "start-task" "task=$TASK_ID retry=$RETRY"
+
 ARGS=("$SCRIPT_DIR/swarm_state.py" start-task --repo-root "$REPO_ROOT" --task-id "$TASK_ID")
 if [[ "$RETRY" == "1" ]]; then
   ARGS+=(--retry)
 fi
 
+set +e
 python3 "${ARGS[@]}"
+rc=$?
+set -e
+
+if [[ $rc -eq 0 ]]; then
+  swarm_log "INFO" "start-task" "task=$TASK_ID started successfully"
+else
+  swarm_log "ERROR" "start-task" "task=$TASK_ID start failed (exit $rc)"
+fi
+exit $rc

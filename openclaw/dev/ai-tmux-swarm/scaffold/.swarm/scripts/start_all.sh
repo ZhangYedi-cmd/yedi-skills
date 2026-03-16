@@ -8,6 +8,11 @@ STATE_PATH="$SWARM_DIR/state/tasks.json"
 CONFIG_FILE="$SWARM_DIR/config.env"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
+swarm_log() {
+  local level="$1" component="$2" msg="$3"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$component] [$level] $msg"
+}
+
 CHAT_ID=""
 ENGINE=""
 MODEL=""
@@ -50,9 +55,15 @@ if [[ -f "$CONFIG_FILE" ]]; then
   set -a
   source "$CONFIG_FILE"
   set +a
+  swarm_log "DEBUG" "start-all" "config loaded from $CONFIG_FILE"
 fi
 
 mkdir -p "$SWARM_DIR/state" "$SWARM_DIR/logs" "$SWARM_DIR/worktree"
+
+# Persist all start_all output (including first monitor sweep) to monitor.log
+exec > >(tee -a "$SWARM_DIR/logs/monitor.log") 2>&1
+
+swarm_log "INFO" "start-all" "starting swarm: repo=$REPO_ROOT engine=${ENGINE:-default} model=${MODEL:-default}"
 
 INIT_ARGS=(
   "$PYTHON_BIN" "$SCRIPT_DIR/swarm_state.py" init-run
@@ -72,8 +83,11 @@ if [[ -n "$CHAT_ID" ]]; then
   INIT_ARGS+=(--chat-id "$CHAT_ID")
 fi
 
+swarm_log "INFO" "start-all" "initializing state..."
 "${INIT_ARGS[@]}"
+swarm_log "INFO" "start-all" "state initialized at $STATE_PATH"
 
+swarm_log "INFO" "start-all" "running first monitor sweep (--strict-launch)"
 "$SCRIPT_DIR/monitor.sh" --once --strict-launch
 
 is_all_terminal() {
@@ -82,10 +96,11 @@ is_all_terminal() {
 
 install_cron() {
   if [[ "${SWARM_AUTO_INSTALL_CRON:-1}" != "1" ]]; then
+    swarm_log "DEBUG" "start-all" "SWARM_AUTO_INSTALL_CRON=0, skipping cron install"
     return 0
   fi
   if ! command -v crontab >/dev/null 2>&1; then
-    echo "crontab not found; skipping monitor install." >&2
+    swarm_log "WARN" "start-all" "crontab not found; skipping monitor install"
     return 0
   fi
 
@@ -116,11 +131,11 @@ install_cron() {
     printf '%s\n' "$line"
   } | crontab -
 
-  echo "Installed monitor cron ($schedule)."
+  swarm_log "INFO" "start-all" "monitor cron installed ($schedule)"
 }
 
 if ! is_all_terminal; then
   install_cron
 fi
 
-echo "Swarm initialized. State: $STATE_PATH"
+swarm_log "INFO" "start-all" "swarm initialized. State: $STATE_PATH"
