@@ -118,16 +118,24 @@ install_cron() {
   bash_bin="$(command -v bash || true)"
   [[ -n "$bash_bin" ]] || bash_bin="/bin/bash"
 
+  # Build a deduplicated, essential PATH for the cron environment.
+  # Raw $PATH can be very long and break crontab line parsing.
+  local clean_path
+  clean_path="$(printf '%s\n' "${PATH//:/$'\n'}" | awk '!seen[$0]++' | paste -sd: -)"
+
   local marker="ai-tmux-swarm:$REPO_ROOT"
   local current
   current="$(crontab -l 2>/dev/null || true)"
-  local command="PATH='$PATH'; cd '$REPO_ROOT' && '$bash_bin' '$SCRIPT_DIR/monitor.sh' --cron >> '$SWARM_DIR/logs/monitor.log' 2>&1"
+  local command="cd \"$REPO_ROOT\" && \"$bash_bin\" \"$SCRIPT_DIR/monitor.sh\" --cron >> \"$SWARM_DIR/logs/monitor.log\" 2>&1"
   local line="$schedule $command # $marker"
   local filtered
   filtered="$(printf '%s\n' "$current" | grep -Fv "$marker" || true)"
+  # Also remove any stale PATH= line we may have written before
+  filtered="$(printf '%s\n' "$filtered" | grep -Fv "# swarm-path:$REPO_ROOT" || true)"
 
   {
     printf '%s\n' "$filtered" | sed '/^[[:space:]]*$/d'
+    printf 'PATH=%s # swarm-path:%s\n' "$clean_path" "$REPO_ROOT"
     printf '%s\n' "$line"
   } | crontab -
 

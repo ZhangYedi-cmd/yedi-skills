@@ -39,8 +39,9 @@ if python3 "$SCRIPT_DIR/swarm_state.py" all-terminal --state "$STATE_PATH" >/dev
   swarm_log "INFO" "monitor" "all tasks terminal — removing cron entry"
   if command -v crontab >/dev/null 2>&1; then
     MARKER="ai-tmux-swarm:$REPO_ROOT"
+    PATH_MARKER="swarm-path:$REPO_ROOT"
     CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
-    FILTERED_CRON="$(printf '%s\n' "$CURRENT_CRON" | grep -Fv "$MARKER" || true)"
+    FILTERED_CRON="$(printf '%s\n' "$CURRENT_CRON" | grep -Fv "$MARKER" | grep -Fv "$PATH_MARKER" || true)"
     printf '%s\n' "$FILTERED_CRON" | sed '/^[[:space:]]*$/d' | crontab -
     swarm_log "INFO" "monitor" "cron entry removed"
   fi
