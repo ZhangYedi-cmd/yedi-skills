@@ -15,7 +15,7 @@ SOULS_DIR="$SCRIPT_DIR/souls"
 
 # Agent 定义
 AGENTS=(taizi foreman reviewer shipper)
-MODEL="openai-codex/gpt-5.4"
+MODEL="openai-codex/gpt-5.3-codex"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -67,7 +67,7 @@ log_info "前置检查通过"
 log_info "创建 workspace 目录..."
 
 for agent in "${AGENTS[@]}"; do
-    workspace="$OPENCLAW_HOME/workspace-${agent}"
+    workspace="$OPENCLAW_HOME/agents/${agent}/agent"
     if [ -d "$workspace" ]; then
         log_warn "workspace 已存在: $workspace（跳过创建）"
     else
@@ -83,9 +83,11 @@ done
 log_info "写入 SOUL.md..."
 
 for agent in "${AGENTS[@]}"; do
-    workspace="$OPENCLAW_HOME/workspace-${agent}"
+    workspace="$OPENCLAW_HOME/agents/${agent}/agent"
     soul_src="$SOULS_DIR/${agent}.md"
     soul_dst="$workspace/SOUL.md"
+    agents_src="$SOULS_DIR/${agent}.agents.md"
+    agents_dst="$workspace/AGENTS.md"
 
     if [ ! -f "$soul_src" ]; then
         log_error "找不到 SOUL 模板: $soul_src"
@@ -94,6 +96,18 @@ for agent in "${AGENTS[@]}"; do
 
     cp "$soul_src" "$soul_dst"
     log_info "写入: $soul_dst"
+
+    if [ -f "$agents_src" ]; then
+        cp "$agents_src" "$agents_dst"
+        log_info "写入: $agents_dst"
+    fi
+
+    tools_src="$SOULS_DIR/${agent}.tools.md"
+    tools_dst="$workspace/TOOLS.md"
+    if [ -f "$tools_src" ]; then
+        cp "$tools_src" "$tools_dst"
+        log_info "写入: $tools_dst"
+    fi
 done
 
 # ============================================================
@@ -121,7 +135,7 @@ IDENTITY_CREATURE[reviewer]="质量审核 AI（门下省）"
 IDENTITY_CREATURE[shipper]="合并交付 AI（尚书省）"
 
 for agent in "${AGENTS[@]}"; do
-    workspace="$OPENCLAW_HOME/workspace-${agent}"
+    workspace="$OPENCLAW_HOME/agents/${agent}/agent"
     cat > "$workspace/IDENTITY.md" << IDEOF
 # IDENTITY.md
 
@@ -141,7 +155,7 @@ log_info "复制 USER.md..."
 
 if [ -f "$MAIN_WORKSPACE/USER.md" ]; then
     for agent in "${AGENTS[@]}"; do
-        workspace="$OPENCLAW_HOME/workspace-${agent}"
+        workspace="$OPENCLAW_HOME/agents/${agent}/agent"
         cp "$MAIN_WORKSPACE/USER.md" "$workspace/USER.md"
     done
     log_info "USER.md 已复制到所有 workspace"
@@ -158,8 +172,10 @@ log_info "注册 Agent..."
 for agent in "${AGENTS[@]}"; do
     workspace="$OPENCLAW_HOME/workspace-${agent}"
 
+    workspace="$OPENCLAW_HOME/agents/${agent}/agent"
+
     # 检查是否已注册
-    if openclaw agents list 2>/dev/null | grep -q "^${agent} "; then
+    if openclaw agents list 2>/dev/null | grep -q "^- ${agent}$"; then
         log_warn "Agent 已注册: ${agent}（跳过）"
         continue
     fi
@@ -188,39 +204,25 @@ log_info "设置 Agent 权限矩阵..."
 # main     → 不限制（保持现有）
 
 python3 << 'PYEOF'
-import json
-import shutil
+import json, os, shutil
 
-config_path = "$OPENCLAW_JSON"
-# 展开环境变量
-import os
-config_path = os.path.expandvars(config_path.replace("$OPENCLAW_JSON", ""))
 config_path = os.path.join(os.environ["HOME"], ".openclaw", "openclaw.json")
-
-# 备份
 shutil.copy2(config_path, config_path + ".bak")
 
 with open(config_path, "r") as f:
     config = json.load(f)
 
-# 确保 agents.entries 存在
-if "agents" not in config:
-    config["agents"] = {}
-if "entries" not in config["agents"]:
-    config["agents"]["entries"] = {}
-
-# 权限矩阵
 permissions = {
-    "taizi":    {"subagents": {"allowAgents": ["foreman"]}},
-    "foreman":  {"subagents": {"allowAgents": ["reviewer"]}},
-    "reviewer": {"subagents": {"allowAgents": ["foreman", "shipper"]}},
-    "shipper":  {"subagents": {"allowAgents": ["taizi"]}},
+    "taizi":    ["foreman"],
+    "foreman":  ["reviewer"],
+    "reviewer": ["foreman", "shipper"],
+    "shipper":  ["taizi"],
 }
 
-for agent_id, perms in permissions.items():
-    if agent_id not in config["agents"]["entries"]:
-        config["agents"]["entries"][agent_id] = {}
-    config["agents"]["entries"][agent_id].update(perms)
+for entry in config["agents"]["list"]:
+    aid = entry.get("id")
+    if aid in permissions:
+        entry["subagents"] = {"allowAgents": permissions[aid]}
 
 with open(config_path, "w") as f:
     json.dump(config, f, indent=2, ensure_ascii=False)
@@ -297,10 +299,10 @@ python3 -c "
 import json, os
 config_path = os.path.join(os.environ['HOME'], '.openclaw', 'openclaw.json')
 c = json.load(open(config_path))
-for a in ['taizi', 'foreman', 'reviewer', 'shipper', 'main']:
-    entry = c.get('agents', {}).get('entries', {}).get(a, {})
+for entry in c.get('agents', {}).get('list', []):
+    aid = entry.get('id')
     allow = entry.get('subagents', {}).get('allowAgents', 'NOT SET')
-    print(f'  {a}: {allow}')
+    print(f'  {aid}: {allow}')
 "
 
 echo ""
@@ -321,11 +323,12 @@ echo ""
 # 验证 workspace 文件
 log_info "Workspace 文件:"
 for agent in "${AGENTS[@]}"; do
-    workspace="$OPENCLAW_HOME/workspace-${agent}"
+    workspace="$OPENCLAW_HOME/agents/${agent}/agent"
     soul="$([ -f "$workspace/SOUL.md" ] && echo 'OK' || echo 'MISSING')"
+    agents_md="$([ -f "$workspace/AGENTS.md" ] && echo 'OK' || echo 'MISSING')"
     identity="$([ -f "$workspace/IDENTITY.md" ] && echo 'OK' || echo 'MISSING')"
     user="$([ -f "$workspace/USER.md" ] && echo 'OK' || echo 'MISSING')"
-    echo "  ${agent}: SOUL=${soul} IDENTITY=${identity} USER=${user}"
+    echo "  ${agent}: SOUL=${soul} AGENTS=${agents_md} IDENTITY=${identity} USER=${user}"
 done
 
 echo ""

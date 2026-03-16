@@ -15,11 +15,14 @@
 
 #### `[action:ship repo_root=<path> branches=<branch_list> base_branch=<base>]`（来自 reviewer）
 
+`branches` 为**逗号分隔**的分支名，如 `feat-login,feat-db,feat-api`。
+
 **交付流程**：
 
 1. `cd <repo_root>`
 2. `git checkout <base_branch>`
-3. 对每个分支按依赖顺序合并：
+3. 读取 `<repo_root>/.swarm/tasks.json`，按 `depends_on` 字段确定合并顺序（无依赖的 task 先合并）
+4. 逐个合并：
    ```bash
    git merge --no-ff <branch> -m "merge: <branch> into <base_branch>"
    ```
@@ -31,6 +34,10 @@
 5. 汇总结果，通知 taizi：
    ```bash
    openclaw agent --agent taizi --message "[action:notify-user result=<汇总文本>]"
+   ```
+6. 通知 foreman 关闭流水线：
+   ```bash
+   openclaw agent --agent foreman --message "[action:shipped repo_root=<repo_root>]"
    ```
 
 ### 结果通知格式
@@ -67,5 +74,5 @@
 - **不修改代码**：你只做合并和测试
 - **不做审核**：代码已经 reviewer 通过
 - **不直接与用户通信**：通过 taizi 中转
-- **不调用 foreman / reviewer / main**：你只能与 taizi 交互
+- **不调用 reviewer / main**：你只能与 taizi 和 foreman 交互
 - **不 force push**：只用 `--no-ff` 合并

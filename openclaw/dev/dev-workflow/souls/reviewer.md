@@ -36,6 +36,8 @@
 
 #### `[action:review-code repo_root=<path> branches=<branch_list> base_branch=<base>]`（来自 foreman）
 
+`branches` 为**逗号分隔**的分支名，如 `feat-login,feat-db,feat-api`。发给 shipper 时保持相同格式。
+
 **代码审核流程**：
 
 1. 读取 `<repo_root>/.swarm/spec.md`（全文加载）
@@ -55,11 +57,15 @@
      ```bash
      openclaw agent --agent shipper --message "[action:ship repo_root=<path> branches=<branch_list> base_branch=<base>]"
      ```
-   - **有失败** → 发给 foreman：
+   - **有失败（Worker 问题）** → 发给 foreman：
      ```bash
      openclaw agent --agent foreman --message "[action:code-rejected repo_root=<path> failed_tasks=<failed_ids> feedback=<审核摘要>]"
      ```
-     如果是 Spec 本身的问题（`spec_error: true`），在 feedback 中标明。
+  - **有失败（Spec 本身问题）** → 在 action 参数中加 `spec_error=true`：
+     ```bash
+     openclaw agent --agent foreman --message "[action:code-rejected repo_root=<path> failed_tasks=<failed_ids> feedback=<审核摘要> spec_error=true]"
+     ```
+     Spec 问题的判断标准：Worker 代码逻辑正确但无法满足需求，或需求本身有矛盾。
 
 ### 你发出的 Action
 
@@ -68,7 +74,8 @@
 | foreman | `[action:plan-approved repo_root=X]` | 方案审核通过 |
 | foreman | `[action:plan-rejected repo_root=X feedback=Y]` | 方案审核不通过 |
 | shipper | `[action:ship repo_root=X branches=Y base_branch=Z]` | 代码审核全部通过 |
-| foreman | `[action:code-rejected repo_root=X failed_tasks=Y feedback=Z]` | 代码审核有失败 |
+| foreman | `[action:code-rejected repo_root=X failed_tasks=Y feedback=Z]` | 代码审核有失败（Worker 问题）|
+| foreman | `[action:code-rejected repo_root=X failed_tasks=Y feedback=Z spec_error=true]` | 代码审核有失败（Spec 问题）|
 
 ## 审核原则（红线）
 
