@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swarm Dashboard</title>
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+  <!-- Header -->
+  <header id="header">
+    <div class="header-left">
+      <h1 id="repo-name">Swarm Dashboard</h1>
+    </div>
+    <div class="header-center">
+      <span id="uptime" class="header-stat" title="Running time">--:--:--</span>
+    </div>
+    <div class="header-right">
+      <span class="status-pill pending" id="stat-pending" title="Pending">0</span>
+      <span class="status-pill running" id="stat-running" title="Running">0</span>
+      <span class="status-pill retrying" id="stat-retrying" title="Retrying">0</span>
+      <span class="status-pill done" id="stat-done" title="Done">0</span>
+      <span class="status-pill failed" id="stat-failed" title="Failed">0</span>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main id="main">
+    <!-- DAG panel -->
+    <section id="dag-panel">
+      <svg id="dag-svg"></svg>
+    </section>
+
+    <!-- Detail panel -->
+    <section id="detail-panel">
+      <div id="detail-placeholder">
+        <p>Select a task node to view details</p>
+      </div>
+
+      <!-- Task detail view -->
+      <div id="task-detail" class="hidden">
+        <div class="detail-header">
+          <h2 id="detail-title"></h2>
+          <span id="detail-status" class="status-badge"></span>
+        </div>
+        <div class="detail-meta">
+          <div class="meta-row"><span class="meta-label">ID</span><span id="detail-id" class="meta-value"></span></div>
+          <div class="meta-row"><span class="meta-label">Description</span><span id="detail-desc" class="meta-value"></span></div>
+          <div class="meta-row"><span class="meta-label">Engine / Model</span><span id="detail-engine" class="meta-value"></span></div>
+          <div class="meta-row">
+            <span class="meta-label">Branch</span>
+            <span id="detail-branch" class="meta-value copyable" title="Click to copy"></span>
+          </div>
+          <div class="meta-row"><span class="meta-label">Started</span><span id="detail-started" class="meta-value"></span></div>
+          <div class="meta-row"><span class="meta-label">Completed</span><span id="detail-completed" class="meta-value"></span></div>
+          <div class="meta-row"><span class="meta-label">Attempts</span><span id="detail-attempts" class="meta-value"></span></div>
+          <div class="meta-row"><span class="meta-label">Restarts</span><span id="detail-restarts" class="meta-value"></span></div>
+          <div class="meta-row"><span class="meta-label">Exit Code</span><span id="detail-exit-code" class="meta-value"></span></div>
+          <div class="meta-row"><span class="meta-label">Note</span><span id="detail-note" class="meta-value"></span></div>
+          <div class="meta-row"><span class="meta-label">Dependencies</span><span id="detail-deps" class="meta-value"></span></div>
+        </div>
+
+        <!-- Prompt section -->
+        <details id="prompt-section" class="prompt-details">
+          <summary>Prompt</summary>
+          <pre id="prompt-content" class="prompt-pre"></pre>
+        </details>
+
+        <!-- Tab bar -->
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="detail">Detail</button>
+          <button class="tab-btn" data-tab="logs">Logs</button>
+        </div>
+
+        <!-- Log viewer -->
+        <div id="log-viewer" class="hidden">
+          <div class="log-toolbar">
+            <button id="log-pause-btn" class="log-btn" title="Pause auto-scroll">Pause</button>
+            <button id="log-clear-btn" class="log-btn" title="Clear log display">Clear</button>
+          </div>
+          <pre id="log-content" class="log-pre"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer id="footer">
+    <span id="conn-status" class="conn-indicator disconnected">Disconnected</span>
+    <span id="last-update">Last update: --</span>
+  </footer>
+
+  <script src="/static/vendor/dagre.min.js"></script>
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>
