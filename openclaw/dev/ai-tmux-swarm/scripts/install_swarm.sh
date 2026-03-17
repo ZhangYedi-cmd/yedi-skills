@@ -61,6 +61,8 @@ mkdir -p .swarm
 if command -v rsync >/dev/null 2>&1; then
   rsync -a \
     --exclude 'config.env' \
+    --exclude 'tasks.json' \
+    --exclude 'prompts/' \
     --exclude 'logs/' \
     --exclude 'state/' \
     --exclude 'worktree/' \
@@ -68,6 +70,8 @@ if command -v rsync >/dev/null 2>&1; then
 else
   cp -R "$SOURCE/." "$REPO_PATH/.swarm/"
   rm -rf "$REPO_PATH/.swarm/logs" "$REPO_PATH/.swarm/state" "$REPO_PATH/.swarm/worktree"
+  # preserve user-owned content if already present
+  [[ -f "$REPO_PATH/.swarm/tasks.json" ]] || cp "$SOURCE/tasks.json" "$REPO_PATH/.swarm/tasks.json"
 fi
 
 python3 - <<'PY' "$REPO_PATH/.swarm/tasks.json" "$ENGINE" "$DEFAULT_MODEL"
