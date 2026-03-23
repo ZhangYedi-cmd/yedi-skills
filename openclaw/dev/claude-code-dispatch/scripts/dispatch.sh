@@ -61,6 +61,26 @@ fi
 
 WORKDIR="$(cd "$WORKDIR" 2>/dev/null && pwd || echo "$WORKDIR")"
 
+# ---- 读取项目级 config（CLI 参数优先）----
+# 记录哪些参数是用户通过 CLI 显式传入的
+_CLI_MODEL="$MODEL" _CLI_MAX_RETRIES="$MAX_RETRIES" _CLI_ALLOWED_TOOLS="$ALLOWED_TOOLS"
+
+CONFIG_FILE="$WORKDIR/.claude-dispatch/config.json"
+if [[ -f "$CONFIG_FILE" ]]; then
+  echo "[dispatch] Loading config: $CONFIG_FILE"
+  _cfg() { jq -r "$1 // empty" "$CONFIG_FILE" 2>/dev/null || true; }
+
+  # 有默认值的参数：CLI 值等于初始默认值 → 视为未指定 → 用 config
+  [[ "$_CLI_MODEL" == "claude-sonnet-4-6" ]]    && { v="$(_cfg '.model')";          [[ -n "$v" ]] && MODEL="$v"; }
+  [[ "$_CLI_MAX_RETRIES" == "2" ]]              && { v="$(_cfg '.max_retries')";     [[ -n "$v" ]] && MAX_RETRIES="$v"; }
+  [[ "$_CLI_ALLOWED_TOOLS" == "Skill,Write,Read,WebSearch,WebFetch,Bash,Agent,Glob,Grep" ]] && { v="$(_cfg '.allowed_tools')"; [[ -n "$v" ]] && ALLOWED_TOOLS="$v"; }
+
+  # 无默认值的参数：CLI 为空 → 用 config
+  [[ -z "$FEISHU_TARGET" ]]   && { v="$(_cfg '.notify.feishu_target')";  [[ -n "$v" ]] && FEISHU_TARGET="$v"; }
+  [[ -z "$FEISHU_ACCOUNT" ]]  && { v="$(_cfg '.notify.feishu_account')"; [[ -n "$v" ]] && FEISHU_ACCOUNT="$v"; }
+  [[ -z "$AGENT_ID" ]]        && { v="$(_cfg '.notify.agent_id')";       [[ -n "$v" ]] && AGENT_ID="$v"; }
+fi
+
 # ---- 生成任务 ID ----
 # 中文任务名用 md5 前8位做 slug
 TASK_SLUG="$(echo "$TASK_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//')"

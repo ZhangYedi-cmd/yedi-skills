@@ -1,0 +1,10 @@
+{
+  "model": "claude-sonnet-4-6",
+  "max_retries": 2,
+  "allowed_tools": "Skill,Write,Read,WebSearch,WebFetch,Bash,Agent,Glob,Grep",
+  "notify": {
+    "feishu_target": "",
+    "feishu_account": "",
+    "agent_id": ""
+  }
+}

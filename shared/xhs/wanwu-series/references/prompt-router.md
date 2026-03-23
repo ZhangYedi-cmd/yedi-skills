@@ -9,16 +9,18 @@
 ### 封面 → wanwu-cover
 
 读取以下文件组装封面 prompt：
-- `~/.claude/skills/wanwu-cover/references/prompt-assembly.md` → 9 模块结构
-- `~/.claude/skills/wanwu-cover/references/compositions.md` → 构图模板片段
-- `~/.claude/skills/wanwu-cover/references/visual-dna.md` → 视觉规范（查阅用）
+- `~/.claude/skills/wanwu-cover/references/workflows/prompt-assembly.md` → 9 模块框架
+- `~/.claude/skills/wanwu-cover/references/compositions/{chosen}.md` → 构图 Prompt 片段
+- `~/.claude/skills/wanwu-cover/references/styles/{chosen}.md` → 风格片段
+- `~/.claude/skills/wanwu-cover/references/elements/*.md` → 视觉元素（按需查阅）
 
 ### 内容页 → wanwu-content
 
 读取以下文件组装内容页 prompt：
-- `~/.claude/skills/wanwu-content/references/prompt-assembly.md` → 10 模块结构
-- `~/.claude/skills/wanwu-content/references/content-layouts.md` → 布局模板片段
-- `~/.claude/skills/wanwu-content/references/visual-dna.md` → 视觉规范（查阅用）
+- `~/.claude/skills/wanwu-content/references/workflows/prompt-assembly.md` → 10 模块框架
+- `~/.claude/skills/wanwu-content/references/layouts/{chosen}.md` → 布局 Prompt 片段
+- `~/.claude/skills/wanwu-content/references/styles/{chosen}.md` → 风格片段
+- `~/.claude/skills/wanwu-content/references/elements/*.md` → 视觉元素（按需查阅）
 
 ---
 

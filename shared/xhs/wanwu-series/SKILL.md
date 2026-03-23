@@ -1,14 +1,12 @@
 ---
 name: wanwu-series
-description: >
+description: >-
   批量生成「万物图鉴」风格的完整图文系列（封面+内容页）。
-  统筹 wanwu-cover（封面）和 wanwu-content（内容页）两个子技能，
-  自动规划系列大纲、批量组装 Prompt、批量生成图片。
   当用户提到"做一套图鉴"、"批量生成"、"完整系列"、"封面+内容页"、
-  "十二生肖全套"、"国粹系列"时使用此技能。
+  "十二生肖全套"、"国粹系列"、"系列图鉴"、"全套图鉴"时使用此技能。
 ---
 
-# 万物图鉴系列生成器 v1.2
+# 万物图鉴系列生成器
 
 将任意主题规划为完整的图文系列（1 封面 + N 内容页），批量生成。
 
@@ -123,7 +121,9 @@ pages:
 
 #### 3b. 组装封面 Prompt
 
-按 `wanwu-cover/references/prompt-assembly.md` 的 9 模块结构组装封面 prompt，
+按 `wanwu-cover/references/workflows/prompt-assembly.md` 的 9 模块结构组装封面 prompt，
+加载 `wanwu-cover/references/compositions/{chosen}.md` 获取构图 Prompt 片段，
+加载 `wanwu-cover/references/styles/{chosen}.md` 获取风格片段，
 保存至 `{output-dir}/cover/prompt.md`。
 
 #### 3c. 逐页组装内容页 Prompt
@@ -131,7 +131,9 @@ pages:
 按页码顺序，对每一页：
 
 1. 根据大纲中该页的配置（layout / style / central_subject / knowledge_modules），
-   按 `wanwu-content/references/prompt-assembly.md` 的 10 模块结构组装完整 prompt。
+   按 `wanwu-content/references/workflows/prompt-assembly.md` 的 10 模块结构组装完整 prompt。
+   加载 `wanwu-content/references/layouts/{chosen}.md` 获取布局 Prompt 片段。
+   加载 `wanwu-content/references/styles/{chosen}.md` 获取风格片段。
    - 开头加防泄露声明（CRITICAL RENDERING INSTRUCTION...）
    - 不得出现英文占位符，全部替换为实际内容
    - 饱和度 70-85%，polished digital illustration，silky-smooth
@@ -252,12 +254,14 @@ Do NOT render any English layout instructions, variable names, or structural mar
 
 | 需求 | 引用 |
 |------|------|
-| 封面视觉 DNA | `wanwu-cover/references/visual-dna.md` |
-| 封面构图模板 | `wanwu-cover/references/compositions.md` |
-| 封面 Prompt 结构 | `wanwu-cover/references/prompt-assembly.md` |
-| 内容页视觉 DNA | `wanwu-content/references/visual-dna.md` |
-| 内容页布局模板 | `wanwu-content/references/content-layouts.md` |
-| 内容页 Prompt 结构 | `wanwu-content/references/prompt-assembly.md` |
+| 封面 Prompt 框架 | `wanwu-cover/references/workflows/prompt-assembly.md` |
+| 封面构图模板 | `wanwu-cover/references/compositions/{chosen}.md` |
+| 封面风格片段 | `wanwu-cover/references/styles/{chosen}.md` |
+| 封面视觉元素 | `wanwu-cover/references/elements/*.md`（按需加载） |
+| 内容页 Prompt 框架 | `wanwu-content/references/workflows/prompt-assembly.md` |
+| 内容页布局模板 | `wanwu-content/references/layouts/{chosen}.md` |
+| 内容页风格片段 | `wanwu-content/references/styles/{chosen}.md` |
+| 内容页视觉元素 | `wanwu-content/references/elements/*.md`（按需加载） |
 | 系列规划模板 | 本技能 `references/series-planning.md` |
 | Prompt 路由规则 | 本技能 `references/prompt-router.md` |
 
@@ -274,21 +278,3 @@ Do NOT render any English layout instructions, variable names, or structural mar
 
 系统会检查 `{output-dir}/page-{N}/content.png` 是否已存在，已存在的跳过。
 
----
-
-## Changelog
-
-### v1.2
-- **先写后画**：Step 3 先批量组装全部 Prompt（封面+所有内容页），Step 4 再逐张生成图片
-- 分离文案创作与图片生成两个阶段，便于在生成前统一审查/调整 prompt
-
-### v1.1
-- **移除并行 Agent 模式**：Step 4 改为主流程逐页串行生成，不再启动子 Agent
-- 简化流程，减少上下文开销
-
-### v1.0 (初版)
-- 统筹 wanwu-cover + wanwu-content
-- 6 步工作流：规划 → 确认 → 封面 → 内容页 → 检查 → 报告
-- 支持 mixed 布局（每页自动推断）
-- 支持断点续传（--start）
-- Prompt 防泄露规则
