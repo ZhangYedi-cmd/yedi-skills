@@ -27,6 +27,11 @@ STALL_TIMEOUT="${STALL_TIMEOUT:-1800}"          # 30 minutes
 CAPTURE_LINES=50
 CALLBACK_RETRY_LIMIT="${CALLBACK_RETRY_LIMIT:-2}"
 
+# OpenClaw notification config
+OPENCLAW_BIN="${OPENCLAW_BIN:-$(command -v openclaw 2>/dev/null || echo "")}"
+SWARM_AGENT_ID="${SWARM_AGENT_ID:-}"
+OPENCLAW_EVENT_MODE="${OPENCLAW_EVENT_MODE:-now}"
+
 SINGLE_TASK="${1:-}"
 
 # ---------------------------------------------------------------------------
@@ -97,6 +102,25 @@ update_callback_state() {
     fi
 }
 
+notify_openclaw() {
+    local text="$1"
+    if [ -z "$OPENCLAW_BIN" ]; then
+        return 0
+    fi
+    if [ -n "$SWARM_AGENT_ID" ]; then
+        # Directed delivery to specific agent
+        "$OPENCLAW_BIN" agent \
+            --agent "$SWARM_AGENT_ID" \
+            --message "$text" \
+            --json 2>/dev/null || true
+    else
+        # Fallback: system event via heartbeat
+        "$OPENCLAW_BIN" system event \
+            --text "$text" \
+            --mode "$OPENCLAW_EVENT_MODE" 2>/dev/null || true
+    fi
+}
+
 get_task_backend() {
     local task_id="$1"
     if command -v jq &>/dev/null && [ -f "$ACTIVE_TASKS_FILE" ]; then
@@ -110,7 +134,24 @@ get_task_backend() {
 
 extract_callback_json() {
     local captured="$1"
-    echo "$captured" | sed -n '/```callback-json/,/```/{/```/d;p}'
+    # Extract JSON between ```callback-json and ```, handling cases where
+    # the opening fence and JSON may be on the same line (e.g. ```callback-json{)
+    local block
+    block=$(printf '%s\n' "$captured" | awk '
+        /```callback-json/ {
+            # Strip the fence marker, keep any JSON on the same line
+            sub(/.*```callback-json/, "")
+            if (length($0) > 0) print
+            capture = 1
+            next
+        }
+        capture && /```/ {
+            capture = 0
+            next
+        }
+        capture { print }
+    ')
+    printf '%s\n' "$block"
 }
 
 callback_fingerprint_file() {
@@ -193,10 +234,7 @@ request_callback_correction() {
     write_milestone "$task_id" \
         "Callback contract violated after ${CALLBACK_RETRY_LIMIT} retries: ${reason}"
 
-    if command -v openclaw &>/dev/null; then
-        echo "Task ${task_id} failed: callback contract violated (${reason})" | \
-            openclaw system event --mode now 2>/dev/null || true
-    fi
+    notify_openclaw "Task ${task_id} failed: callback contract violated (${reason})"
 
     return 1
 }
@@ -241,10 +279,7 @@ handle_callback() {
                 reset_callback_retry_state "$task_id"
                 write_milestone "$task_id" "Completed: ${summary}"
                 echo "$callback_json" > "${ORCHESTRATOR_DIR}/${task_id}-callback.json"
-                if command -v openclaw &>/dev/null; then
-                    echo "Task ${task_id} completed: ${summary}" | \
-                        openclaw system event --mode now 2>/dev/null || true
-                fi
+                notify_openclaw "Task ${task_id} completed: ${summary}"
                 return 0
             else
                 update_task_status "$task_id" "repairing"
@@ -268,10 +303,7 @@ handle_callback() {
             reset_callback_retry_state "$task_id"
             write_milestone "$task_id" "Failed: ${summary}"
             echo "$callback_json" > "${ORCHESTRATOR_DIR}/${task_id}-callback.json"
-            if command -v openclaw &>/dev/null; then
-                echo "Task ${task_id} FAILED: ${summary}" | \
-                    openclaw system event --mode now 2>/dev/null || true
-            fi
+            notify_openclaw "Task ${task_id} FAILED: ${summary}"
             return 0
             ;;
         need_clarification)
@@ -279,10 +311,7 @@ handle_callback() {
             reset_callback_retry_state "$task_id"
             write_milestone "$task_id" "Needs clarification: ${summary}"
             echo "$callback_json" > "${ORCHESTRATOR_DIR}/${task_id}-callback.json"
-            if command -v openclaw &>/dev/null; then
-                echo "Task ${task_id} needs clarification: ${summary}" | \
-                    openclaw system event --mode now 2>/dev/null || true
-            fi
+            notify_openclaw "Task ${task_id} needs clarification: ${summary}"
             return 0
             ;;
         *)
@@ -302,30 +331,38 @@ monitor_acpx_task() {
     local task_id="$1"
 
     # Check if ACPX session exists
-    if ! acpx sessions show -s "$task_id" &>/dev/null; then
+    if ! acpx sessions show "$task_id" &>/dev/null; then
         log "${task_id}: ACPX session not found — marking as crashed."
         update_task_status "$task_id" "crashed"
         write_milestone "$task_id" "ACPX session lost"
         return 0
     fi
 
-    # Get session output (structured JSON)
-    local output
-    output=$(acpx sessions show -s "$task_id" --format json 2>/dev/null || echo "")
+    # Check agent status via acpx status
+    local agent_status
+    agent_status=$(acpx status -s "$task_id" 2>/dev/null | grep '^status:' | awk '{print $2}')
 
-    if [ -z "$output" ]; then
-        return 1  # Keep monitoring
+    if [ "$agent_status" = "running" ]; then
+        return 1  # Still running, keep monitoring
     fi
 
-    # Check for [done] signal in output
-    if echo "$output" | grep -q '"type":"done"'; then
-        write_milestone "$task_id" "Agent completed (ACPX done signal)"
+    # Agent is no longer running (dead/idle/etc) — check for callback in history
+    if [ "$agent_status" = "dead" ] || [ "$agent_status" = "idle" ] || [ -n "$agent_status" ]; then
+        log "${task_id}: Agent status is '${agent_status}' — checking for callback."
 
-        # Try to extract callback JSON from output
-        local callback_json
-        callback_json=$(echo "$output" | grep 'callback-json' -A 50 | head -50)
-        if [ -n "$callback_json" ]; then
-            callback_json=$(extract_callback_json "$callback_json")
+        local output
+        output=$(acpx sessions read --tail 1 "$task_id" 2>/dev/null || echo "")
+
+        if [ -z "$output" ]; then
+            return 1  # No output yet
+        fi
+
+        # Check for callback-json in output
+        if echo "$output" | grep -q 'callback-json'; then
+            write_milestone "$task_id" "Agent completed (callback detected)"
+
+            local callback_json
+            callback_json=$(extract_callback_json "$output")
             if callback_already_processed "$task_id" "$callback_json"; then
                 return 1
             fi
@@ -334,8 +371,9 @@ monitor_acpx_task() {
             fi
             return 1
         else
+            # Agent finished but no callback found
             if request_callback_correction "$task_id" \
-                "ACPX done signal arrived without callback-json"; then
+                "Agent finished (status: ${agent_status}) without callback-json"; then
                 return 1
             fi
         fi
@@ -480,7 +518,7 @@ run_recovery() {
 
         case "$backend" in
             acpx)
-                if command -v acpx &>/dev/null && acpx sessions show -s "$tid" &>/dev/null; then
+                if command -v acpx &>/dev/null && acpx sessions show "$tid" &>/dev/null; then
                     log "Recovery: ${tid} (acpx) — session alive."
                 else
                     log "Recovery: ${tid} (acpx) — session DEAD."
