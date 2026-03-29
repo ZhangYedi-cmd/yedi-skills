@@ -28,7 +28,19 @@ CAPTURE_LINES=50
 CALLBACK_RETRY_LIMIT="${CALLBACK_RETRY_LIMIT:-2}"
 
 # OpenClaw notification config
-OPENCLAW_BIN="${OPENCLAW_BIN:-$(command -v openclaw 2>/dev/null || echo "")}"
+# Probe openclaw binary: explicit env > PATH > common nvm locations
+_probe_openclaw() {
+    command -v openclaw 2>/dev/null && return
+    # Check common nvm install paths
+    for nodedir in "$HOME"/.nvm/versions/node/*/bin; do
+        if [ -x "$nodedir/openclaw" ]; then
+            echo "$nodedir/openclaw"
+            return
+        fi
+    done
+    echo ""
+}
+OPENCLAW_BIN="${OPENCLAW_BIN:-$(_probe_openclaw)}"
 SWARM_AGENT_ID="${SWARM_AGENT_ID:-}"
 OPENCLAW_EVENT_MODE="${OPENCLAW_EVENT_MODE:-now}"
 
@@ -132,6 +144,46 @@ get_task_backend() {
     fi
 }
 
+get_task_agent() {
+    local task_id="$1"
+    if command -v jq &>/dev/null && [ -f "$ACTIVE_TASKS_FILE" ]; then
+        jq -r --arg tid "$task_id" \
+            '.tasks[] | select(.task_id == $tid) | .agent // "claude"' \
+            "$ACTIVE_TASKS_FILE"
+    else
+        echo "claude"
+    fi
+}
+
+get_task_worktree() {
+    local task_id="$1"
+    if command -v jq &>/dev/null && [ -f "$ACTIVE_TASKS_FILE" ]; then
+        jq -r --arg tid "$task_id" \
+            '.tasks[] | select(.task_id == $tid) | .worktree // ""' \
+            "$ACTIVE_TASKS_FILE"
+    else
+        echo ""
+    fi
+}
+
+# Run an acpx command with correct agent prefix and cwd context.
+# Usage: run_acpx <task_id> <acpx_subcommand_args...>
+# Example: run_acpx "sis3-backend" sessions show "sis3-backend"
+# Example: run_acpx "sis3-backend" -s "sis3-backend" status
+run_acpx() {
+    local task_id="$1"
+    shift
+    local agent worktree
+    agent=$(get_task_agent "$task_id")
+    worktree=$(get_task_worktree "$task_id")
+
+    if [ -n "$worktree" ] && [ -d "$worktree" ]; then
+        (cd "$worktree" && acpx "$agent" "$@")
+    else
+        acpx "$agent" "$@"
+    fi
+}
+
 extract_callback_json() {
     local captured="$1"
     # Extract JSON between ```callback-json and ```, handling cases where
@@ -217,7 +269,7 @@ request_callback_correction() {
             "Callback contract violation: ${reason}. Requested correction ${attempt}/${CALLBACK_RETRY_LIMIT}"
 
         if [ "$backend" = "acpx" ] && command -v acpx &>/dev/null; then
-            acpx prompt -s "$task_id" --no-wait \
+            run_acpx "$task_id" -s "$task_id" --no-wait \
                 "You finished without the required valid callback-json block. ${reason}. Output a corrected callback-json fenced block now with task_id, status, branch, files_changed, test_results, duration_minutes, and summary." \
                 2>/dev/null || true
         elif [ "$backend" = "tmux" ]; then
@@ -287,7 +339,7 @@ handle_callback() {
                 write_milestone "$task_id" "Completed with ${failed} test failures"
                 # Send fix instruction via appropriate backend
                 if [ "$backend" = "acpx" ] && command -v acpx &>/dev/null; then
-                    acpx prompt -s "$task_id" --no-wait \
+                    run_acpx "$task_id" -s "$task_id" --no-wait \
                         "There are ${failed} failing tests. Fix them and output a new callback-json block." \
                         2>/dev/null || true
                 elif [ "$backend" = "tmux" ]; then
@@ -330,52 +382,49 @@ handle_callback() {
 monitor_acpx_task() {
     local task_id="$1"
 
-    # Check if ACPX session exists
-    if ! acpx sessions show "$task_id" &>/dev/null; then
+    # Step 1: Check if ACPX session exists
+    if ! run_acpx "$task_id" sessions show "$task_id" &>/dev/null; then
         log "${task_id}: ACPX session not found — marking as crashed."
         update_task_status "$task_id" "crashed"
         write_milestone "$task_id" "ACPX session lost"
         return 0
     fi
 
-    # Check agent status via acpx status
-    local agent_status
-    agent_status=$(acpx status -s "$task_id" 2>/dev/null | grep '^status:' | awk '{print $2}')
+    # Step 2: Always check sessions read for callback-json FIRST
+    # (ACPX agents may stay "running" after task completion, waiting for next prompt)
+    local output
+    output=$(run_acpx "$task_id" sessions read --tail 1 "$task_id" 2>/dev/null || echo "")
 
-    if [ "$agent_status" = "running" ]; then
-        return 1  # Still running, keep monitoring
-    fi
+    if [ -n "$output" ] && echo "$output" | grep -q 'callback-json'; then
+        local callback_json
+        callback_json=$(extract_callback_json "$output")
 
-    # Agent is no longer running (dead/idle/etc) — check for callback in history
-    if [ "$agent_status" = "dead" ] || [ "$agent_status" = "idle" ] || [ -n "$agent_status" ]; then
-        log "${task_id}: Agent status is '${agent_status}' — checking for callback."
-
-        local output
-        output=$(acpx sessions read --tail 1 "$task_id" 2>/dev/null || echo "")
-
-        if [ -z "$output" ]; then
-            return 1  # No output yet
+        # Skip if already processed (dedup)
+        if callback_already_processed "$task_id" "$callback_json"; then
+            return 1
         fi
 
-        # Check for callback-json in output
-        if echo "$output" | grep -q 'callback-json'; then
-            write_milestone "$task_id" "Agent completed (callback detected)"
+        write_milestone "$task_id" "Agent completed (callback detected)"
+        if handle_callback "$task_id" "$callback_json"; then
+            return 0
+        fi
+        return 1
+    fi
 
-            local callback_json
-            callback_json=$(extract_callback_json "$output")
-            if callback_already_processed "$task_id" "$callback_json"; then
-                return 1
-            fi
-            if handle_callback "$task_id" "$callback_json"; then
-                return 0
-            fi
+    # Step 3: No callback yet — check agent status
+    local agent_status
+    agent_status=$(run_acpx "$task_id" -s "$task_id" status 2>/dev/null | grep '^status:' | awk '{print $2}')
+
+    if [ "$agent_status" = "running" ]; then
+        return 1  # Still running, no callback yet — keep monitoring
+    fi
+
+    # Step 4: Agent is not running AND no callback — ask for correction
+    if [ "$agent_status" = "dead" ] || [ "$agent_status" = "idle" ] || [ -n "$agent_status" ]; then
+        log "${task_id}: Agent status is '${agent_status}' with no callback — requesting correction."
+        if request_callback_correction "$task_id" \
+            "Agent finished (status: ${agent_status}) without callback-json"; then
             return 1
-        else
-            # Agent finished but no callback found
-            if request_callback_correction "$task_id" \
-                "Agent finished (status: ${agent_status}) without callback-json"; then
-                return 1
-            fi
         fi
         return 0
     fi
@@ -518,7 +567,7 @@ run_recovery() {
 
         case "$backend" in
             acpx)
-                if command -v acpx &>/dev/null && acpx sessions show "$tid" &>/dev/null; then
+                if command -v acpx &>/dev/null && run_acpx "$tid" sessions show "$tid" &>/dev/null; then
                     log "Recovery: ${tid} (acpx) — session alive."
                 else
                     log "Recovery: ${tid} (acpx) — session DEAD."

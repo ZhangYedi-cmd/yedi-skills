@@ -142,27 +142,24 @@ if [ "$BACKEND" = "acpx" ]; then
 
     PROMPT_CONTENT="$(cat "$FULL_PROMPT_FILE")"
 
-    # Use acpx with appropriate agent adapter
+    # Resolve acpx agent subcommand (claude, codex, gemini, etc.)
     case "$AGENT" in
-        claude)
-            ACPX_AGENT_FLAG="" ;;  # default agent
-        gemini)
-            ACPX_AGENT_FLAG="--agent gemini" ;;
-        codex)
-            ACPX_AGENT_FLAG="--agent codex" ;;
-        *)
-            ACPX_AGENT_FLAG="" ;;
+        claude)  ACPX_AGENT="claude" ;;
+        gemini)  ACPX_AGENT="gemini" ;;
+        codex)   ACPX_AGENT="codex" ;;
+        *)       ACPX_AGENT="claude" ;;
     esac
 
-    # Launch: --no-wait returns immediately, --approve-all prevents TTY blocks
+    # Ensure ACPX session exists
     cd "$WORKTREE_DIR"
-    # shellcheck disable=SC2086
-    acpx prompt \
+    acpx --approve-all "$ACPX_AGENT" sessions ensure --name "$TASK_ID" 2>/dev/null || true
+
+    # Launch: --approve-all is a GLOBAL option (before agent subcommand)
+    # Use -f to send prompt from file instead of inline (avoids shell escaping issues)
+    acpx --approve-all "$ACPX_AGENT" prompt \
         -s "$TASK_ID" \
         --no-wait \
-        --approve-all \
-        $ACPX_AGENT_FLAG \
-        "$PROMPT_CONTENT" 2>&1 || {
+        -f "$FULL_PROMPT_FILE" 2>&1 || {
         echo "[launch] ACPX failed. Falling back to tmux..."
         BACKEND="tmux"
     }
@@ -199,12 +196,14 @@ if [ "$BACKEND" = "tmux" ]; then
         *)       AGENT_CMD="" ;;
     esac
 
+    # Use the persistent prompt copy (not the temp file which gets deleted)
+    PERSISTENT_PROMPT="${ORCHESTRATOR_DIR}/${TASK_ID}-prompt.md"
     if [ -n "$AGENT_CMD" ]; then
         tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
-            "${AGENT_CMD} < '${FULL_PROMPT_FILE}'" Enter
+            "${AGENT_CMD} < '${PERSISTENT_PROMPT}'" Enter
     else
         tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
-            "cat '${FULL_PROMPT_FILE}'" Enter
+            "cat '${PERSISTENT_PROMPT}'" Enter
     fi
 
     LAUNCH_PID=$(tmux -S "$TMUX_SOCKET" display-message -t "$TASK_ID" -p '#{pane_pid}' 2>/dev/null || echo "unknown")
@@ -251,16 +250,15 @@ if [ -f "$DAILY_FILE" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Start watchdog for tmux backend (ACPX has built-in crash recovery)
+# Start watchdog for ALL backends (ACPX also needs callback detection + notification)
 # ---------------------------------------------------------------------------
-if [ "$BACKEND" = "tmux" ]; then
-    WATCHDOG_SCRIPT="$(dirname "$0")/watchdog.sh"
-    if [ -f "$WATCHDOG_SCRIPT" ] && [ -x "$WATCHDOG_SCRIPT" ]; then
-        echo "[launch] Starting watchdog for task '${TASK_ID}'."
+WATCHDOG_SCRIPT="$(dirname "$0")/watchdog.sh"
+if [ -f "$WATCHDOG_SCRIPT" ] && [ -x "$WATCHDOG_SCRIPT" ]; then
+    echo "[launch] Starting watchdog for task '${TASK_ID}' (backend: ${BACKEND})."
+    SWARM_AGENT_ID="${SWARM_AGENT_ID:-}" WATCHDOG_INTERVAL="${WATCHDOG_INTERVAL:-30}" \
         nohup "$WATCHDOG_SCRIPT" "$TASK_ID" > "${ORCHESTRATOR_DIR}/${TASK_ID}-watchdog.log" 2>&1 &
-        WATCHDOG_PID=$!
-        echo "$WATCHDOG_PID" > "${ORCHESTRATOR_DIR}/${TASK_ID}-watchdog.pid"
-    fi
+    WATCHDOG_PID=$!
+    echo "$WATCHDOG_PID" > "${ORCHESTRATOR_DIR}/${TASK_ID}-watchdog.pid"
 fi
 
 # ---------------------------------------------------------------------------
