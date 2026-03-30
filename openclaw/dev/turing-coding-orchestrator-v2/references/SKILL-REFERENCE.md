@@ -4,16 +4,31 @@
 
 ## Backend Policy
 
-| 维度 | ACPX | tmux |
+| 维度 | acpx-exec（推荐） | tmux |
 |------|------|------|
-| 通信模型 | 全双工 JSON-RPC over stdio | PTY 刮削 |
-| 输出格式 | 类型化 ndjson | 原始终端文本 |
-| 中途追加指令 | prompt 队列，天然安全 | `send-keys`，有时序风险 |
-| 完成检测 | `[done]` + callback-json | callback-json / capture-pane |
-| 取消 | 协作式 cancel | `Escape` / `C-c` |
-| 崩溃恢复 | 会话级恢复更强 | session 可能活着，Agent 可能已死 |
+| 启动命令 | `acpx --approve-all claude exec -f prompt.md` | `claude --print --permission-mode bypassPermissions < prompt.md` |
+| 连接模型 | 客户端全程持有 stdio，任务完成才退出 | claude 进程前台跑，stdout tee 到文件 |
+| 输出落盘 | tee 到 `<task_id>-output.log` | tee 到 `<task_id>-output.log` |
+| watchdog 模式 | `acpx-exec`（tmux session 存活 + output.log） | `tmux`（同上） |
+| 中途追加指令 | ❌ exec 是一次性的，无法追加 | `tmux send-keys` |
+| 取消 | `tmux send-keys C-c` | `tmux send-keys C-c` |
 
-默认新任务用 ACPX。只有在 ACPX 不可用、不稳定，或需要 tmux 可视化监控时才回退 tmux。
+**默认用 acpx-exec**。需要多轮对话或中途干预时才用 tmux。
+
+### ⚠️ 已知陷阱（血泪教训）
+
+**ACPX `prompt --no-wait` 会导致 Agent 被 cancel**
+- 根因：`--no-wait` 投完即退，客户端断连 → stdio 关闭 → Agent 收到 `session/cancel`
+- Agent 可能已经写完代码，但没有输出 callback
+- **禁止使用 `acpx prompt --no-wait` 派发任务**
+
+**`acpx sessions show` 的 `historyEntries` 不可靠**
+- `historyEntries: 0` 不代表 Agent 没在跑，只是 stats 未更新
+- 不要用它来判断 prompt 是否送达
+
+**watchdog 不要用 `acpx sessions show` 判断 acpx-exec session 是否存活**
+- `exec` 模式不建 named session，`sessions show` 必然返回空
+- 正确方式：判断 tmux session 是否存活 + output.log 是否有输出
 
 ## Why This Skill Exists
 
@@ -52,7 +67,7 @@ scripts/setup.sh <task_id> <branch> <worktree_dir> "<task_desc>" [backend]
 scripts/launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]
 ```
 
-### `scripts/watchdog.py`
+### `scripts/watchdog.sh`
 
 用途：
 - 零 token 监控 session
@@ -60,25 +75,41 @@ scripts/launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]
 - 更新状态与里程碑
 - 检测 crash / stall
 - 在测试失败或 callback 违规时发起修复回合
-- 将合法 callback 落盘为 `.clawdbot/<task_id>-callback.json`
 
 用法：
 
 ```bash
-python3 scripts/watchdog.py [task_id]
+scripts/watchdog.sh [task_id]
 ```
 
 ## Command Cheat Sheet
 
-### ACPX
+### ACPX exec（推荐派发方式）
 
 ```bash
-acpx prompt -s <session> "<instruction>"
-acpx prompt -s <session> --no-wait "<instruction>"
-acpx prompt -s <session> --approve-all "<instruction>"
-acpx sessions list
-acpx sessions show -s <session>
-acpx cancel -s <session>
+# 派发任务（在 tmux pane 里跑，客户端全程持有连接）
+acpx --approve-all claude exec -f <prompt_file> 2>&1 | tee <output_log>
+
+# 查看 Agent 输出
+cat .clawdbot/<task_id>-output.log
+
+# 中断（进入 tmux pane 后 Ctrl-C）
+tmux -S /tmp/openclaw-tmux/openclaw.sock send-keys -t <task_id> C-c
+```
+
+> `launch.sh` 传入 `backend=acpx` 时自动走 exec 模式，无需手动拼命令。
+
+### ACPX（禁止用于任务派发）
+
+```bash
+# ❌ 禁止：--no-wait 会导致 Agent 被 cancel
+acpx prompt -s <session> --no-wait -f prompt.md
+
+# ✅ 仅用于查询
+acpx claude sessions list
+acpx claude sessions show <session>
+acpx claude sessions history <session>
+acpx claude sessions read --tail 50 <session>
 ```
 
 ### tmux

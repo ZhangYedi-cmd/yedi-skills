@@ -17,18 +17,8 @@ set -euo pipefail
 # Arguments
 # ---------------------------------------------------------------------------
 TASK_ID="${1:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
-WORKTREE_DIR_ARG="${2:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
-
-# Resolve worktree to absolute path before any cd
-WORKTREE_DIR="$(cd "$WORKTREE_DIR_ARG" 2>/dev/null && pwd || realpath "$WORKTREE_DIR_ARG" 2>/dev/null || echo "$WORKTREE_DIR_ARG")"
-PROMPT_FILE_ARG="${3:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
-
-# Resolve prompt file to absolute path before any cd
-PROMPT_FILE="$(cd "$(dirname "$PROMPT_FILE_ARG")" && pwd)/$(basename "$PROMPT_FILE_ARG")"
-if [ ! -f "$PROMPT_FILE" ]; then
-    echo "[launch] ERROR: Prompt file not found: ${PROMPT_FILE_ARG} (resolved: ${PROMPT_FILE})"
-    exit 1
-fi
+WORKTREE_DIR="${2:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
+PROMPT_FILE="${3:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
 BACKEND="${4:-auto}"
 AGENT="${5:-auto}"
 
@@ -146,13 +136,13 @@ LAUNCH_PID="unknown"
 
 if [ "$BACKEND" = "acpx" ]; then
     # -----------------------------------------------------------------------
-    # ACPX backend (preferred)
+    # ACPX backend — use `exec` (one-shot, client holds connection until done)
+    # Runs inside a tmux pane so the process is not killed when shell exits.
+    # Output is tee'd to <task_id>-output.log for watchdog to read.
     # -----------------------------------------------------------------------
-    echo "[launch] Starting via ACPX..."
+    echo "[launch] Starting via ACPX (exec mode in tmux)..."
 
-    PROMPT_CONTENT="$(cat "$FULL_PROMPT_FILE")"
-
-    # Resolve acpx agent subcommand (claude, codex, gemini, etc.)
+    # Resolve acpx agent subcommand
     case "$AGENT" in
         claude)  ACPX_AGENT="claude" ;;
         gemini)  ACPX_AGENT="gemini" ;;
@@ -160,54 +150,31 @@ if [ "$BACKEND" = "acpx" ]; then
         *)       ACPX_AGENT="claude" ;;
     esac
 
-    # Always start fresh: close any existing session to prevent stale callback history
-    cd "$WORKTREE_DIR"
-    acpx --approve-all "$ACPX_AGENT" sessions close "$TASK_ID" 2>/dev/null || true
-    sleep 1
-    # sessions ensure must succeed — if it fails the session doesn't exist and prompt will be lost
-    if ! acpx --approve-all "$ACPX_AGENT" sessions ensure --name "$TASK_ID" 2>/dev/null; then
-        echo "[launch] WARNING: sessions ensure failed. Proceeding anyway (agent may auto-create)."
+    OUTPUT_LOG="${ORCHESTRATOR_DIR}/${TASK_ID}-output.log"
+    mkdir -p "$(dirname "$TMUX_SOCKET")"
+
+    # Kill existing tmux session (idempotent)
+    if tmux -S "$TMUX_SOCKET" has-session -t "$TASK_ID" 2>/dev/null; then
+        tmux -S "$TMUX_SOCKET" kill-session -t "$TASK_ID"
     fi
 
-    # Launch: --approve-all is a GLOBAL option (before agent subcommand)
-    # Use -f to send prompt from file instead of inline (avoids shell escaping issues)
-    acpx --approve-all "$ACPX_AGENT" prompt \
-        -s "$TASK_ID" \
-        --no-wait \
-        -f "$FULL_PROMPT_FILE" 2>&1 || {
-        echo "[launch] ACPX prompt failed. Falling back to tmux..."
-        # Note: REPO_ROOT was captured before cd to WORKTREE_DIR, so it still points to main repo
-        BACKEND="tmux"
-    }
+    # Create tmux session with large scrollback
+    tmux -S "$TMUX_SOCKET" new-session -d -s "$TASK_ID" -c "$WORKTREE_DIR" -x 220 -y 50
+    tmux -S "$TMUX_SOCKET" set-option -t "$TASK_ID" history-limit 5000
 
-    if [ "$BACKEND" = "acpx" ]; then
-        LAUNCH_PID="acpx:${TASK_ID}"
-        echo "[launch] ACPX session '${TASK_ID}' started."
+    # Launch: acpx exec holds connection until [done], tee output to file
+    PERSISTENT_PROMPT="${ORCHESTRATOR_DIR}/${TASK_ID}-prompt.md"
+    tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
+        "acpx --approve-all ${ACPX_AGENT} exec -f '${PERSISTENT_PROMPT}' 2>&1 | tee '${OUTPUT_LOG}'" Enter
 
-        # Prompt delivery confirmation: wait for agent to initialize (acp_session_id
-        # changes from "-" to a real UUID once session/new succeeds). The prompt is
-        # queued reliably by ACPX even during cold start, so we only confirm agent
-        # readiness — we do NOT re-send the prompt on timeout (that causes duplicates).
-        MAX_WAIT=30
-        POLL_INTERVAL=3
-        WAITED=0
-        AGENT_READY=false
-        while [ "$WAITED" -lt "$MAX_WAIT" ]; do
-            sleep "$POLL_INTERVAL"
-            WAITED=$((WAITED + POLL_INTERVAL))
-            AGENT_SID=$(acpx "$ACPX_AGENT" sessions show "$TASK_ID" 2>/dev/null | grep agentSessionId | awk '{print $2}')
-            if [ -n "$AGENT_SID" ] && [ "$AGENT_SID" != "-" ]; then
-                AGENT_READY=true
-                break
-            fi
-        done
+    LAUNCH_PID=$(tmux -S "$TMUX_SOCKET" display-message -t "$TASK_ID" -p '#{pane_pid}' 2>/dev/null || echo "unknown")
+    echo "[launch] ACPX exec session '${TASK_ID}' started in tmux (PID: ${LAUNCH_PID})."
 
-        if [ "$AGENT_READY" = true ]; then
-            echo "[launch] Agent connected (agentSessionId=${AGENT_SID}, ${WAITED}s)."
-        else
-            echo "[launch] WARNING: Agent not ready after ${MAX_WAIT}s (agentSessionId=${AGENT_SID:-'-'}). Prompt is queued — agent may still pick it up."
-        fi
-    fi
+    # Mark as acpx-exec so watchdog uses tmux-based monitoring (not acpx sessions show)
+    BACKEND="acpx-exec"
+    LAUNCH_PID="acpx-exec:${TASK_ID}"
+    echo "[launch] ACPX session '${TASK_ID}' started."
+
 fi
 
 if [ "$BACKEND" = "tmux" ]; then
@@ -224,38 +191,29 @@ if [ "$BACKEND" = "tmux" ]; then
         tmux -S "$TMUX_SOCKET" kill-session -t "$TASK_ID"
     fi
 
-    # Create session
-    tmux -S "$TMUX_SOCKET" new-session -d -s "$TASK_ID" -c "$WORKTREE_DIR"
+    # Create session (5000-line scrollback so output is not lost)
+    tmux -S "$TMUX_SOCKET" new-session -d -s "$TASK_ID" -c "$WORKTREE_DIR" -x 220 -y 50
+    tmux -S "$TMUX_SOCKET" set-option -t "$TASK_ID" history-limit 5000
+
+    # Detect agent command
+    case "$AGENT" in
+        claude)  AGENT_CMD="claude --print --permission-mode bypassPermissions" ;;
+        gemini)  AGENT_CMD="gemini" ;;
+        codex)   AGENT_CMD="codex" ;;
+        aider)   AGENT_CMD="aider" ;;
+        *)       AGENT_CMD="" ;;
+    esac
 
     # Use the persistent prompt copy (not the temp file which gets deleted)
     PERSISTENT_PROMPT="${ORCHESTRATOR_DIR}/${TASK_ID}-prompt.md"
-
-    # Detect agent launch command.
-    # Note: Codex does NOT support stdin redirection here; it needs `codex exec "..."`
-    # inside a PTY. tmux provides the PTY, so we read the prompt file into a shell var.
-    case "$AGENT" in
-        claude)
-            AGENT_LAUNCH_CMD="claude --print < '${PERSISTENT_PROMPT}'"
-            ;;
-        gemini)
-            AGENT_LAUNCH_CMD="gemini < '${PERSISTENT_PROMPT}'"
-            ;;
-        codex)
-            # Codex exec reads prompt from stdin when the positional prompt is `-`.
-            # This avoids echoing the entire task prompt into the tmux pane, which can
-            # confuse watchdog callback detection.
-            AGENT_LAUNCH_CMD="codex exec --full-auto - < '${PERSISTENT_PROMPT}'"
-            ;;
-        aider)
-            AGENT_LAUNCH_CMD="aider < '${PERSISTENT_PROMPT}'"
-            ;;
-        *)
-            AGENT_LAUNCH_CMD="cat '${PERSISTENT_PROMPT}'"
-            ;;
-    esac
-
-    tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
-        "$AGENT_LAUNCH_CMD" Enter
+    OUTPUT_LOG="${ORCHESTRATOR_DIR}/${TASK_ID}-output.log"
+    if [ -n "$AGENT_CMD" ]; then
+        tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
+            "${AGENT_CMD} < '${PERSISTENT_PROMPT}' 2>&1 | tee '${OUTPUT_LOG}'" Enter
+    else
+        tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
+            "cat '${PERSISTENT_PROMPT}'" Enter
+    fi
 
     LAUNCH_PID=$(tmux -S "$TMUX_SOCKET" display-message -t "$TASK_ID" -p '#{pane_pid}' 2>/dev/null || echo "unknown")
     echo "[launch] tmux session '${TASK_ID}' started (PID: ${LAUNCH_PID})."
@@ -341,7 +299,7 @@ echo "[launch] Done for task '${TASK_ID}'."
 echo "[launch]   Backend:  ${BACKEND}"
 echo "[launch]   Agent:    ${AGENT}"
 echo "[launch]   PID:      ${LAUNCH_PID}"
-if [ "$BACKEND" = "tmux" ]; then
+if [ "$BACKEND" = "tmux" ] || [ "$BACKEND" = "acpx-exec" ]; then
     echo "[launch]   Attach:   tmux -S ${TMUX_SOCKET} attach -t ${TASK_ID}"
 elif [ "$BACKEND" = "acpx" ]; then
     echo "[launch]   Status:   acpx sessions show -s ${TASK_ID}"

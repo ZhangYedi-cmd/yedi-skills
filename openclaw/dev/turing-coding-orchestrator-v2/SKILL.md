@@ -54,19 +54,33 @@ user-invocable: true
 
 ### 后端
 
-- 默认：ACPX
-- 回退：tmux
-- 不要在 `exec pty:true` 里再嵌套 tmux
-- 不要通过 prompt / send-keys 传递 secrets
+**推荐：`acpx-exec` 模式**（通过 `launch.sh backend=acpx` 自动触发）
+
+```
+acpx --approve-all claude exec -f prompt.md | tee output.log
+# 在 tmux pane 里运行，客户端全程持有连接，不会 cancel
+```
+
+**回退：`tmux` 模式**（需要多轮对话或中途干预时）
+
+```
+claude --print --permission-mode bypassPermissions < prompt.md | tee output.log
+# 在 tmux pane 里运行
+```
+
+**硬规则：**
+- ❌ 禁止用 `acpx prompt --no-wait` 派发任务 → 客户端退出后 Agent 被 cancel
+- ❌ 禁止不带 `--permission-mode bypassPermissions` 跑 claude → 会卡在权限确认
+- ✅ `launch.sh` 已内置上述规则，直接用脚本，不要手拼命令
 
 ### Agent
 
-- 默认编码：Claude Code
+- 默认编码：Claude Code（`claude`）
 - 超长上下文：Gemini CLI
 - 用户明确要求或任务更适合时：Codex CLI
 - 其他都不可用时：aider
 
-更多命令速查与设计背景见 `references/SKILL-REFERENCE.md`。
+更多命令速查与陷阱说明见 `references/SKILL-REFERENCE.md`。
 
 ## 4. 规范状态机
 

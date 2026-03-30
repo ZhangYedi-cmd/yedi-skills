@@ -426,16 +426,6 @@ class CallbackParser:
             if required - cb.keys():
                 continue
 
-            # Reject the prompt template block injected by launch.sh.
-            # When the full prompt is visible in tmux output, the callback example can be
-            # mistaken for a real callback. Those placeholder values are deterministic.
-            files_changed = cb.get("files_changed") or []
-            summary = cb.get("summary", "") or ""
-            if files_changed == ["list all files you modified"]:
-                continue
-            if summary.strip() == "Brief description of what was done":
-                continue
-
             last_valid = cb
 
         if last_valid is None:
@@ -582,12 +572,12 @@ class Watchdog:
                 else:
                     logger.warning(f"Recovery: {task.task_id} (acpx) — session DEAD → crashed.")
                     self._mark_crashed(task)
-            elif task.backend == "tmux":
+            elif task.backend in ("tmux", "acpx-exec"):
                 alive = self._tmux_alive(task.session)
                 if alive:
-                    logger.info(f"Recovery: {task.task_id} (tmux) — session alive.")
+                    logger.info(f"Recovery: {task.task_id} ({task.backend}) — session alive.")
                 else:
-                    logger.warning(f"Recovery: {task.task_id} (tmux) — session DEAD → crashed.")
+                    logger.warning(f"Recovery: {task.task_id} ({task.backend}) — session DEAD → crashed.")
                     self._mark_crashed(task)
 
     # ------------------------------------------------------------------
@@ -597,7 +587,7 @@ class Watchdog:
         """Returns True if task reached a terminal state."""
         if task.backend == "acpx":
             return self._monitor_acpx(task)
-        elif task.backend == "tmux":
+        elif task.backend in ("tmux", "acpx-exec"):
             return self._monitor_tmux(task)
         else:
             logger.warning(f"{task.task_id}: unknown backend '{task.backend}'")
@@ -678,27 +668,6 @@ class Watchdog:
     # ------------------------------------------------------------------
     # Callback handler — state machine
     # ------------------------------------------------------------------
-    def _persist_callback(self, task_id: str, cb: dict):
-        """Write callback JSON to .clawdbot/<task_id>-callback.json for external consumers."""
-        callback_file = self.config.orchestrator_dir / f"{task_id}-callback.json"
-        try:
-            import fcntl
-            tmp = callback_file.with_suffix(".tmp")
-            with open(tmp, "w") as f:
-                fcntl.flock(f, fcntl.LOCK_EX)
-                json.dump(cb, f, indent=2)
-                fcntl.flock(f, fcntl.LOCK_UN)
-            tmp.rename(callback_file)
-        except ImportError:
-            tmp = callback_file.with_suffix(".tmp")
-            with open(tmp, "w") as f:
-                json.dump(cb, f, indent=2)
-            tmp.rename(callback_file)
-        except Exception as e:
-            logger.warning(f"Failed to persist callback for {task_id}: {e}")
-        else:
-            logger.info(f"{task_id}: callback persisted → {callback_file}")
-
     def _handle_callback(self, task: Task, client: AcpxClient, cb: dict) -> bool:
         status = cb.get("status")
         failed = int(cb.get("test_results", {}).get("failed", 0))
@@ -706,9 +675,6 @@ class Watchdog:
 
         logger.info(f"{task.task_id}: callback — status={status}, failed={failed}")
         self.memory.update_callback_state(task.task_id, "received")
-
-        # Persist callback to disk for workflow consumers (e.g. issue-to-pr.lobster)
-        self._persist_callback(task.task_id, cb)
 
         if status == "completed" and failed == 0:
             self._retry_counts.pop(task.task_id, None)  # reset retry counter on success
@@ -787,7 +753,20 @@ class Watchdog:
             self._mark_crashed(task)
             return True
 
-        output = self._tmux_capture(task.session)
+        # Primary: read from output log file (avoids scrollback loss)
+        output_log = self.config.orchestrator_dir / f"{task.task_id}-output.log"
+        output = ""
+        if output_log.exists():
+            try:
+                output = output_log.read_text(errors="replace")
+            except Exception:
+                pass
+        # Fallback: tmux capture-pane
+        if not output or "callback-json" not in output:
+            captured = self._tmux_capture(task.session)
+            if captured:
+                output = output + "\n" + captured
+
         if output and "callback-json" in output:
             cb = CallbackParser.extract(output, task.task_id)
             if cb:
@@ -815,7 +794,6 @@ class Watchdog:
     @staticmethod
     def _tmux_capture(session: str, lines: int = 50) -> str:
         sock = "/tmp/openclaw-tmux/openclaw.sock"
-        # -J joins wrapped lines so that long JSON lines are not broken by pane width
         result = subprocess.run(
             ["tmux", "-S", sock, "capture-pane", "-p", "-J", "-t", session, "-S", f"-{lines}"],
             capture_output=True, text=True
