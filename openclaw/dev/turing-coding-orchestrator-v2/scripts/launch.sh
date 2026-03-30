@@ -17,8 +17,18 @@ set -euo pipefail
 # Arguments
 # ---------------------------------------------------------------------------
 TASK_ID="${1:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
-WORKTREE_DIR="${2:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
-PROMPT_FILE="${3:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
+WORKTREE_DIR_ARG="${2:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
+
+# Resolve worktree to absolute path before any cd
+WORKTREE_DIR="$(cd "$WORKTREE_DIR_ARG" 2>/dev/null && pwd || realpath "$WORKTREE_DIR_ARG" 2>/dev/null || echo "$WORKTREE_DIR_ARG")"
+PROMPT_FILE_ARG="${3:?Usage: launch.sh <task_id> <worktree_dir> <prompt_file> [backend] [agent]}"
+
+# Resolve prompt file to absolute path before any cd
+PROMPT_FILE="$(cd "$(dirname "$PROMPT_FILE_ARG")" && pwd)/$(basename "$PROMPT_FILE_ARG")"
+if [ ! -f "$PROMPT_FILE" ]; then
+    echo "[launch] ERROR: Prompt file not found: ${PROMPT_FILE_ARG} (resolved: ${PROMPT_FILE})"
+    exit 1
+fi
 BACKEND="${4:-auto}"
 AGENT="${5:-auto}"
 
@@ -150,11 +160,14 @@ if [ "$BACKEND" = "acpx" ]; then
         *)       ACPX_AGENT="claude" ;;
     esac
 
-    # Always start fresh: close any existing session first, then create new one
+    # Always start fresh: close any existing session to prevent stale callback history
     cd "$WORKTREE_DIR"
     acpx --approve-all "$ACPX_AGENT" sessions close "$TASK_ID" 2>/dev/null || true
     sleep 1
-    acpx --approve-all "$ACPX_AGENT" sessions ensure --name "$TASK_ID" 2>/dev/null || true
+    # sessions ensure must succeed — if it fails the session doesn't exist and prompt will be lost
+    if ! acpx --approve-all "$ACPX_AGENT" sessions ensure --name "$TASK_ID" 2>/dev/null; then
+        echo "[launch] WARNING: sessions ensure failed. Proceeding anyway (agent may auto-create)."
+    fi
 
     # Launch: --approve-all is a GLOBAL option (before agent subcommand)
     # Use -f to send prompt from file instead of inline (avoids shell escaping issues)
@@ -162,13 +175,38 @@ if [ "$BACKEND" = "acpx" ]; then
         -s "$TASK_ID" \
         --no-wait \
         -f "$FULL_PROMPT_FILE" 2>&1 || {
-        echo "[launch] ACPX failed. Falling back to tmux..."
+        echo "[launch] ACPX prompt failed. Falling back to tmux..."
+        # Note: REPO_ROOT was captured before cd to WORKTREE_DIR, so it still points to main repo
         BACKEND="tmux"
     }
 
     if [ "$BACKEND" = "acpx" ]; then
         LAUNCH_PID="acpx:${TASK_ID}"
         echo "[launch] ACPX session '${TASK_ID}' started."
+
+        # Prompt delivery confirmation: wait for agent to initialize (acp_session_id
+        # changes from "-" to a real UUID once session/new succeeds). The prompt is
+        # queued reliably by ACPX even during cold start, so we only confirm agent
+        # readiness — we do NOT re-send the prompt on timeout (that causes duplicates).
+        MAX_WAIT=30
+        POLL_INTERVAL=3
+        WAITED=0
+        AGENT_READY=false
+        while [ "$WAITED" -lt "$MAX_WAIT" ]; do
+            sleep "$POLL_INTERVAL"
+            WAITED=$((WAITED + POLL_INTERVAL))
+            AGENT_SID=$(acpx "$ACPX_AGENT" sessions show "$TASK_ID" 2>/dev/null | grep agentSessionId | awk '{print $2}')
+            if [ -n "$AGENT_SID" ] && [ "$AGENT_SID" != "-" ]; then
+                AGENT_READY=true
+                break
+            fi
+        done
+
+        if [ "$AGENT_READY" = true ]; then
+            echo "[launch] Agent connected (agentSessionId=${AGENT_SID}, ${WAITED}s)."
+        else
+            echo "[launch] WARNING: Agent not ready after ${MAX_WAIT}s (agentSessionId=${AGENT_SID:-'-'}). Prompt is queued — agent may still pick it up."
+        fi
     fi
 fi
 
@@ -189,24 +227,35 @@ if [ "$BACKEND" = "tmux" ]; then
     # Create session
     tmux -S "$TMUX_SOCKET" new-session -d -s "$TASK_ID" -c "$WORKTREE_DIR"
 
-    # Detect agent command
-    case "$AGENT" in
-        claude)  AGENT_CMD="claude --print" ;;
-        gemini)  AGENT_CMD="gemini" ;;
-        codex)   AGENT_CMD="codex" ;;
-        aider)   AGENT_CMD="aider" ;;
-        *)       AGENT_CMD="" ;;
-    esac
-
     # Use the persistent prompt copy (not the temp file which gets deleted)
     PERSISTENT_PROMPT="${ORCHESTRATOR_DIR}/${TASK_ID}-prompt.md"
-    if [ -n "$AGENT_CMD" ]; then
-        tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
-            "${AGENT_CMD} < '${PERSISTENT_PROMPT}'" Enter
-    else
-        tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
-            "cat '${PERSISTENT_PROMPT}'" Enter
-    fi
+
+    # Detect agent launch command.
+    # Note: Codex does NOT support stdin redirection here; it needs `codex exec "..."`
+    # inside a PTY. tmux provides the PTY, so we read the prompt file into a shell var.
+    case "$AGENT" in
+        claude)
+            AGENT_LAUNCH_CMD="claude --print < '${PERSISTENT_PROMPT}'"
+            ;;
+        gemini)
+            AGENT_LAUNCH_CMD="gemini < '${PERSISTENT_PROMPT}'"
+            ;;
+        codex)
+            # Codex exec reads prompt from stdin when the positional prompt is `-`.
+            # This avoids echoing the entire task prompt into the tmux pane, which can
+            # confuse watchdog callback detection.
+            AGENT_LAUNCH_CMD="codex exec --full-auto - < '${PERSISTENT_PROMPT}'"
+            ;;
+        aider)
+            AGENT_LAUNCH_CMD="aider < '${PERSISTENT_PROMPT}'"
+            ;;
+        *)
+            AGENT_LAUNCH_CMD="cat '${PERSISTENT_PROMPT}'"
+            ;;
+    esac
+
+    tmux -S "$TMUX_SOCKET" send-keys -t "$TASK_ID" \
+        "$AGENT_LAUNCH_CMD" Enter
 
     LAUNCH_PID=$(tmux -S "$TMUX_SOCKET" display-message -t "$TASK_ID" -p '#{pane_pid}' 2>/dev/null || echo "unknown")
     echo "[launch] tmux session '${TASK_ID}' started (PID: ${LAUNCH_PID})."
@@ -254,9 +303,9 @@ fi
 # ---------------------------------------------------------------------------
 # Start watchdog for ALL backends (ACPX also needs callback detection + notification)
 # ---------------------------------------------------------------------------
-WATCHDOG_SCRIPT="$(dirname "$0")/watchdog.sh"
-if [ -f "$WATCHDOG_SCRIPT" ] && [ -x "$WATCHDOG_SCRIPT" ]; then
-    echo "[launch] Starting watchdog for task '${TASK_ID}' (backend: ${BACKEND})."
+WATCHDOG_PY="$(dirname "$0")/watchdog.py"
+if [ -f "$WATCHDOG_PY" ] && command -v python3 &>/dev/null; then
+    echo "[launch] Starting watchdog (Python) for task '${TASK_ID}' (backend: ${BACKEND})."
     # Resolve gateway token: env > config file
     _resolve_gw_token() {
         if [ -n "${OPENCLAW_GATEWAY_TOKEN:-}" ]; then echo "$OPENCLAW_GATEWAY_TOKEN"; return; fi
@@ -277,7 +326,7 @@ except: pass
     WATCHDOG_INTERVAL="${WATCHDOG_INTERVAL:-30}" \
     OPENCLAW_GATEWAY_TOKEN="$GW_TOKEN" \
     WATCHDOG_REPO_ROOT="$REPO_ROOT" \
-        nohup "$WATCHDOG_SCRIPT" "$TASK_ID" > "${ORCHESTRATOR_DIR}/${TASK_ID}-watchdog.log" 2>&1 &
+        nohup python3 "$WATCHDOG_PY" "$TASK_ID" > "${ORCHESTRATOR_DIR}/${TASK_ID}-watchdog.log" 2>&1 &
     WATCHDOG_PID=$!
     echo "$WATCHDOG_PID" > "${ORCHESTRATOR_DIR}/${TASK_ID}-watchdog.pid"
 fi

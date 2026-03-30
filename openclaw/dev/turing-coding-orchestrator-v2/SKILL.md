@@ -32,7 +32,7 @@ user-invocable: true
 - 优先复用仓库内的现成脚本与工作流：
   - `scripts/setup.sh`
   - `scripts/launch.sh`
-  - `scripts/watchdog.sh`
+  - `scripts/watchdog.py`
   - `references/TASK-LIFECYCLE.md`
   - `workflows/issue-to-pr.lobster`
 - 复杂流程不要靠自由发挥。按 `references/TASK-LIFECYCLE.md` 的状态与转移执行。
@@ -265,7 +265,7 @@ Agent 完成后必须输出：
   - 初始化 branch / worktree / memory / task registry
 - `scripts/launch.sh`
   - 启动 Agent，注入 callback 契约
-- `scripts/watchdog.sh`
+- `scripts/watchdog.py`
   - 监控 session、提取 callback、更新状态、崩溃检测
 - `workflows/issue-to-pr.lobster`
   - issue 到 PR 的确定性示例流程

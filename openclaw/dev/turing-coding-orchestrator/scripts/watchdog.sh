@@ -13,10 +13,17 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
+# Ensure standard tool paths are available (critical when run via nohup)
+# ---------------------------------------------------------------------------
+export PATH="/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:${PATH}"
+
+# ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 TMUX_SOCKET="/tmp/openclaw-tmux/openclaw.sock"
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+# WATCHDOG_REPO_ROOT can be injected by launch.sh to avoid worktree path confusion
+# (git rev-parse --show-toplevel inside a worktree returns the worktree path, not main repo)
+REPO_ROOT="${WATCHDOG_REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 ORCHESTRATOR_DIR="${REPO_ROOT}/.clawdbot"
 ACTIVE_TASKS_FILE="${ORCHESTRATOR_DIR}/active-tasks.json"
 MEMORY_FILE="${REPO_ROOT}/MEMORY.md"
@@ -30,7 +37,9 @@ CALLBACK_RETRY_LIMIT="${CALLBACK_RETRY_LIMIT:-2}"
 # OpenClaw notification config
 # Probe openclaw binary: explicit env > PATH > common nvm locations
 _probe_openclaw() {
-    command -v openclaw 2>/dev/null && return
+    if command -v openclaw 2>/dev/null; then
+        return
+    fi
     # Check common nvm install paths
     for nodedir in "$HOME"/.nvm/versions/node/*/bin; do
         if [ -x "$nodedir/openclaw" ]; then
@@ -43,6 +52,28 @@ _probe_openclaw() {
 OPENCLAW_BIN="${OPENCLAW_BIN:-$(_probe_openclaw)}"
 SWARM_AGENT_ID="${SWARM_AGENT_ID:-}"
 OPENCLAW_EVENT_MODE="${OPENCLAW_EVENT_MODE:-now}"
+# Gateway token for CLI auth (required when gateway.auth.mode=token)
+# Resolved from env > config file fallback
+_resolve_gateway_token() {
+    # 1. Explicit env var
+    if [ -n "${OPENCLAW_GATEWAY_TOKEN:-}" ]; then
+        echo "$OPENCLAW_GATEWAY_TOKEN"
+        return
+    fi
+    # 2. Read from openclaw config file
+    local cfg_file="${OPENCLAW_CONFIG_PATH:-$HOME/.clawdbot/openclaw.json}"
+    if [ -f "$cfg_file" ] && command -v python3 &>/dev/null; then
+        python3 -c "
+import json, sys
+try:
+    with open('$cfg_file') as f:
+        d = json.load(f)
+    print(d.get('gateway', {}).get('auth', {}).get('token', ''))
+except: pass
+" 2>/dev/null
+    fi
+}
+OPENCLAW_GATEWAY_TOKEN="${OPENCLAW_GATEWAY_TOKEN:-$(_resolve_gateway_token)}"
 
 SINGLE_TASK="${1:-}"
 
@@ -117,30 +148,50 @@ update_callback_state() {
 notify_openclaw() {
     local text="$1"
     if [ -z "$OPENCLAW_BIN" ]; then
+        log "notify: openclaw binary not found, skipping"
         return 0
     fi
     if [ -n "$SWARM_AGENT_ID" ]; then
-        # Directed delivery to specific agent
+        # Directed delivery to specific agent session
+        log "notify: directed → agent=$SWARM_AGENT_ID"
         "$OPENCLAW_BIN" agent \
             --agent "$SWARM_AGENT_ID" \
             --message "$text" \
             --json 2>/dev/null || true
     else
-        # Fallback: system event via heartbeat
-        "$OPENCLAW_BIN" system event \
-            --text "$text" \
-            --mode "$OPENCLAW_EVENT_MODE" 2>/dev/null || true
+        # Broadcast via system event (gateway token required)
+        log "notify: broadcast via system event (token=${OPENCLAW_GATEWAY_TOKEN:+set})"
+        if [ -n "$OPENCLAW_GATEWAY_TOKEN" ]; then
+            OPENCLAW_GATEWAY_TOKEN="$OPENCLAW_GATEWAY_TOKEN" \
+                "$OPENCLAW_BIN" system event \
+                --text "$text" \
+                --mode "$OPENCLAW_EVENT_MODE" \
+                --json 2>/dev/null || true
+        else
+            "$OPENCLAW_BIN" system event \
+                --text "$text" \
+                --mode "$OPENCLAW_EVENT_MODE" \
+                --json 2>/dev/null || true
+        fi
     fi
 }
 
 get_task_backend() {
     local task_id="$1"
     if command -v jq &>/dev/null && [ -f "$ACTIVE_TASKS_FILE" ]; then
-        jq -r --arg tid "$task_id" \
+        local backend
+        backend=$(jq -r --arg tid "$task_id" \
             '.tasks[] | select(.task_id == $tid) | .backend // "tmux"' \
-            "$ACTIVE_TASKS_FILE"
+            "$ACTIVE_TASKS_FILE" 2>/dev/null || echo "")
+        # If jq returned empty or literal "null", default to acpx when acpx is available
+        if [ -z "$backend" ] || [ "$backend" = "null" ]; then
+            command -v acpx &>/dev/null && echo "acpx" || echo "tmux"
+        else
+            echo "$backend"
+        fi
     else
-        echo "tmux"
+        # jq unavailable: prefer acpx if it exists
+        command -v acpx &>/dev/null && echo "acpx" || echo "tmux"
     fi
 }
 
@@ -186,12 +237,11 @@ run_acpx() {
 
 extract_callback_json() {
     local captured="$1"
-    # Extract JSON between ```callback-json and ```, handling cases where
-    # the opening fence and JSON may be on the same line (e.g. ```callback-json{)
+    # Extract ONLY THE FIRST ```callback-json ... ``` block.
+    # Handles cases where the opening fence and JSON may be on the same line.
     local block
     block=$(printf '%s\n' "$captured" | awk '
-        /```callback-json/ {
-            # Strip the fence marker, keep any JSON on the same line
+        /```callback-json/ && !done {
             sub(/.*```callback-json/, "")
             if (length($0) > 0) print
             capture = 1
@@ -199,9 +249,10 @@ extract_callback_json() {
         }
         capture && /```/ {
             capture = 0
+            done = 1
             next
         }
-        capture { print }
+        capture && !done { print }
     ')
     printf '%s\n' "$block"
 }
@@ -392,8 +443,9 @@ monitor_acpx_task() {
 
     # Step 2: Always check sessions read for callback-json FIRST
     # (ACPX agents may stay "running" after task completion, waiting for next prompt)
+    # Use --tail 50 to ensure the full callback block is captured (it can span many lines)
     local output
-    output=$(run_acpx "$task_id" sessions read --tail 1 "$task_id" 2>/dev/null || echo "")
+    output=$(run_acpx "$task_id" sessions read --tail 50 "$task_id" 2>/dev/null || echo "")
 
     if [ -n "$output" ] && echo "$output" | grep -q 'callback-json'; then
         local callback_json
@@ -554,8 +606,13 @@ monitor_task() {
 run_recovery() {
     log "Running recovery check..."
 
-    if ! [ -f "$ACTIVE_TASKS_FILE" ] || ! command -v jq &>/dev/null; then
-        log "No active-tasks.json or jq — skipping recovery."
+    if ! [ -f "$ACTIVE_TASKS_FILE" ]; then
+        log "No active-tasks.json — skipping recovery."
+        return
+    fi
+
+    if ! command -v jq &>/dev/null; then
+        log "jq not available — skipping recovery (PATH=${PATH})."
         return
     fi
 
