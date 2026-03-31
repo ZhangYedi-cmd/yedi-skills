@@ -450,24 +450,28 @@ class Notifier:
             logger.warning("notify: openclaw not found, skipping")
             return
 
-        if self.config.swarm_agent_id:
-            self._notify_directed(text)
-        else:
-            self._notify_broadcast(text)
+        # Always try system event first (lightweight, no agent turn)
+        success = self._notify_broadcast(text)
 
-    def _notify_directed(self, text: str):
-        logger.info(f"notify: directed → agent={self.config.swarm_agent_id}")
+        # If broadcast failed and SWARM_AGENT_ID is set, fall back to directed
+        if not success and self.config.swarm_agent_id:
+            self._notify_directed(text)
+
+    def _notify_directed(self, text: str) -> bool:
+        logger.info(f"notify: directed fallback → agent={self.config.swarm_agent_id}")
         try:
-            subprocess.run(
+            result = subprocess.run(
                 [self.config.openclaw_bin, "agent",
                  "--agent", self.config.swarm_agent_id,
                  "--message", text, "--json"],
-                capture_output=True, timeout=15,
+                capture_output=True, timeout=60,
             )
+            return result.returncode == 0
         except Exception as e:
             logger.warning(f"notify directed failed: {e}")
+            return False
 
-    def _notify_broadcast(self, text: str):
+    def _notify_broadcast(self, text: str) -> bool:
         logger.info("notify: broadcast via system event")
         try:
             result = subprocess.run(
@@ -477,12 +481,15 @@ class Notifier:
                  "--json"],
                 capture_output=True, text=True, timeout=15,
             )
-            if result.stdout.strip():
+            if result.returncode == 0:
                 logger.info(f"notify result: {result.stdout.strip()}")
-            if result.returncode != 0:
-                logger.warning(f"notify failed: {result.stderr.strip()[:200]}")
+                return True
+            else:
+                logger.warning(f"notify broadcast failed: {result.stderr.strip()[:200]}")
+                return False
         except Exception as e:
             logger.warning(f"notify broadcast failed: {e}")
+            return False
 
 
 # ---------------------------------------------------------------------------

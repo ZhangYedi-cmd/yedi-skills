@@ -114,8 +114,8 @@ PROMPT_HEADER
 
 echo "[launch] Built prompt ($(wc -l < "$FULL_PROMPT_FILE") lines)."
 
-# Save prompt for debugging
-cp "$FULL_PROMPT_FILE" "${ORCHESTRATOR_DIR}/${TASK_ID}-prompt.md"
+# Save full prompt (separate from user's original prompt file)
+cp "$FULL_PROMPT_FILE" "${ORCHESTRATOR_DIR}/${TASK_ID}-full-prompt.md"
 
 # ---------------------------------------------------------------------------
 # Launch via ACPX native session mode
@@ -130,7 +130,7 @@ case "$AGENT" in
     *)       ACPX_AGENT="claude" ;;
 esac
 
-PERSISTENT_PROMPT="${ORCHESTRATOR_DIR}/${TASK_ID}-prompt.md"
+PERSISTENT_PROMPT="${ORCHESTRATOR_DIR}/${TASK_ID}-full-prompt.md"
 
 # Ensure the named session exists (idempotent — no-op if already created)
 acpx --cwd "${WORKTREE_DIR}" ${ACPX_AGENT} sessions ensure --name "${TASK_ID}" \

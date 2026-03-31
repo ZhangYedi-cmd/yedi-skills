@@ -137,7 +137,7 @@ stages:
       STATUS=$(jq -r --arg tid "$TASK_ID" \
         '.tasks[] | select(.task_id == $tid) | .status' \
         .clawdbot/active-tasks.json 2>/dev/null)
-      [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ] || [ "$STATUS" = "crashed" ]
+      [ "$STATUS" = "verified" ] || [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ] || [ "$STATUS" = "crashed" ] || [ "$STATUS" = "abandoned" ]
     timeout: 3600  # 1 hour max
     poll_interval: 30  # Check every 30 seconds
     on_timeout:
@@ -167,8 +167,8 @@ stages:
         '.tasks[] | select(.task_id == $tid) | .status' \
         .clawdbot/active-tasks.json 2>/dev/null)
 
-      if [ "$STATUS" != "completed" ]; then
-        echo "VERIFY_RESULT=not_completed (status: $STATUS)"
+      if [ "$STATUS" != "verified" ] && [ "$STATUS" != "completed" ]; then
+        echo "VERIFY_RESULT=not_ready (status: $STATUS)"
         exit 1
       fi
 
