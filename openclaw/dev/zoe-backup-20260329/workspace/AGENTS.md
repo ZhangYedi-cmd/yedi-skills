@@ -3,101 +3,64 @@
 ## Session Startup
 
 每次会话开始，按顺序读取：
-1. `SOUL.md` — 你的行为准则
+1. `SOUL.md` — 行为准则
 2. `USER.md` — 迪锅的信息
 3. `memory/YYYY-MM-DD.md`（今天 + 昨天）— 最近做了什么
 4. `MEMORY.md`（仅主会话）— 长期记忆
+5. 检查 `MEMORY.md` 中是否有在途任务（running / repairing / blocked）
 
-不问，直接读。
+有在途任务时，先汇报状态再处理新请求。不问，直接读。
 
-## 纪律
+## 核心 SKILL 体系
 
-### 上下文隔离（铁律）
+你通过三个协作 SKILL 完成从需求到代码的全链路：
 
-```
-┌─ Zoe ────────────────────────┐        ┌─ Claude Code / Codex ─┐
-│  100% 业务上下文              │        │  100% 代码上下文       │
-│  - 用户需求描述               │ Task   │  - 代码库              │
-│  - KM 文档 / PRD             │──.md──→│  - git worktree        │
-│  - 历史决策 / MEMORY.md       │        │  - 编译/测试反馈       │
-│  - 项目背景                   │        │  - 无任何业务噪音      │
-└───────────────────────────────┘        └────────────────────────┘
-```
+| SKILL | 做什么 | 何时用 |
+|-------|--------|--------|
+| `techplan-agent-v2` | 深入读代码库 → 结构化技术方案 | 复杂任务（跨模块 / >5 文件 / 需要架构决策） |
+| `task-spec-gen` | 技术方案或需求 → bite-sized Task Spec | 所有需要 Spec 的任务 |
+| `turing-coding-orchestrator` | setup + launch + watchdog 全流程编排 | 派发任务给子 Agent |
 
-**Task.md 是两个世界的唯一接口。** 给编码 Agent 的 prompt 只包含：
-- 要做什么（精确的技术指令）
-- 在哪里做（worktree 路径）
-- 做完怎么报告（Callback JSON 格式）
-
-**不包含**：为什么要做、客户背景、历史讨论、商业逻辑。
-
-### ACPX 优先
-
-- 首选：`acpx prompt -s <session> --no-wait --approve-all "<指令>"`
-- 兜底：`tmux new-session` + `send-keys`
-- 判断：`which acpx` 存在就用 ACPX，不存在用 tmux
-
-### 结构化回调（必须注入）
-
-每个 Task prompt 末尾必须追加 Callback 指令，要求编码 Agent 完成后输出：
-
-```json
-{
-  "task_id": "<task_id>",
-  "status": "completed|failed|need_clarification",
-  "branch": "<branch>",
-  "files_changed": ["..."],
-  "test_results": { "passed": 0, "failed": 0, "skipped": 0 },
-  "summary": "..."
-}
-```
-
-### 回调路由（纯 if/else，不需要理解自然语言）
-
-| status | failed | 动作 |
-|--------|--------|------|
-| completed | 0 | 独立跑测试验证 → 提 PR → 通知迪锅 |
-| completed | >0 | `acpx prompt -s <session> "修复 N 个失败测试"` |
-| failed | - | 更新 MEMORY.md → 通知迪锅 |
-| need_clarification | - | 把 summary 转发给迪锅，等回复后改写 prompt 重新下发 |
-
-## 禁区
-
-- 不要把业务上下文传给编码 Agent
-- 不要在编码 Agent 会话里进行多轮对话
-- 不要在没有 worktree 隔离的情况下启动 Agent（会污染主分支）
-- 不要信任 Agent 自报的测试结果，独立验证
-- 不要用 `rm` 删文件，用 `trash` 或 `git worktree remove`
-
-## 工具链
-
-详见 `TOOLS.md`。核心命令速查：
-
-| 操作 | ACPX | tmux |
-|------|------|------|
-| 启动任务 | `acpx prompt -s <id> --no-wait --approve-all "<prompt>"` | `tmux new-session -d -s <id> -c <dir>` |
-| 追加指令 | `acpx prompt -s <id> "<text>"` | `tmux send-keys -t <id> "<text>" Enter` |
-| 查看进度 | `acpx sessions show -s <id>` | `tmux capture-pane -p -t <id> -S -20` |
-| 取消任务 | `acpx cancel -s <id>` | `tmux send-keys -t <id> C-c` |
-| 列出会话 | `acpx sessions list` | `tmux list-sessions` |
-
-## 编排流程（标准路径）
+## 标准工作流
 
 ```
-1. 理解任务 → 从用户输入/KM文档/Issue 提取需求
-2. 生成 task_id + branch → 语义化命名
-3. git worktree add ../worktrees/<task_id> -b <branch>
-4. 压缩 Task.md → 纯技术指令 + Callback 模板
-5. acpx prompt -s <task_id> --no-wait --approve-all "<Task.md>"
-6. 写入 MEMORY.md（status: in-progress）
-7. 等待 [done] → 读取 Callback → 路由
-8. 验证 → 提 PR → 通知用户
-9. 清理 worktree（可选）
+收到需求
+    ↓
+判定复杂度
+    ├─ 简单（1-2 文件）→ 跳过 Spec，直接编排器 launch（Raw 模式）
+    ├─ 中等（3-5 文件）→ task-spec-gen（快速链路）→ 确认 → 编排器 launch
+    └─ 复杂（跨模块）  → techplan-agent-v2 → 确认 → task-spec-gen → 确认 → 编排器 launch
 ```
 
-## Memory
+### 完整链路详细步骤
 
-- **Daily notes:** `memory/YYYY-MM-DD.md` — 原始日志
-- **Long-term:** `MEMORY.md` — 蒸馏后的长期记忆
-- 每个任务在 MEMORY.md 有一个条目，格式见 SKILL.md 第 7 节
-- **写下来，不要记在脑子里。**
+1. 使用 `techplan-agent-v2` skill — 读代码库、出技术方案
+   - 强制链路追踪（路由→页面→子组件→API→Store）
+   - 找参考实现
+   - 不确定的点必须问用户（Uncertainty Protocol）
+   - 产出保存为 `.clawdbot/{task_id}-techplan.md`
+2. **确认门 ①**：向用户展示方案，等确认
+3. 使用 `task-spec-gen` skill — 基于方案 + 代码库拆 Spec
+   - 验证文件路径、找参考实现、拆 bite-sized tasks
+   - 产出保存为 `.clawdbot/{task_id}-spec.md`
+4. **确认门 ②**：向用户展示 Spec，等确认
+5. 使用 `turing-coding-orchestrator` skill 的 Playbook 执行 setup + launch
+   - launch.sh 自动检测 Spec → 注入硬约束 prompt
+   - 技术方案自动复制到 worktree 供子 Agent 查阅
+   - watchdog 后台监控
+
+### 子 Agent 的三层降级
+
+子 Agent 拿到的 prompt 中有三层信息源：
+1. **Spec 是权威** — 严格按 Spec 执行
+2. **技术方案是补充** — Spec 不够明确时翻 `.clawdbot/{task_id}-techplan.md`
+3. **不够就问** — 两者都不够 → 输出 `need_clarification` callback → watchdog 通知你 → 你转发给用户
+
+## Red Lines
+
+- **不把业务上下文传给子 Agent** — Spec 是唯一接口
+- **不在子 Agent 会话里多轮对话** — 通过 acpx prompt 下发指令
+- **不在没有 worktree 的情况下启动 Agent** — 会污染主分支
+- **不信任 Agent 自报测试结果** — 独立验证
+- **不跳过确认门** — 技术方案和 Spec 都需要用户确认后才能派发
+- **没有合法 callback 不建 PR** — watchdog 的 `verified` 状态是前提

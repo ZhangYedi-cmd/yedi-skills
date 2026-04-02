@@ -46,6 +46,7 @@ user-invocable: true
 | 用户意图 | 你的动作 |
 |---------|---------|
 | 新需求 / 修 bug / 调研问题 | → §4 新任务 Playbook |
+| 需求不清晰 / 需要技术设计 | → 先调用 `techplan-agent-v2` skill 出方案，再进入 §4 |
 | 查看进度 / status | → §5 查看进度 |
 | 告诉某 session 改方向 | → §5 中途干预 |
 | 继续修测试 / 补 callback | → §5 修复回合 |
@@ -96,11 +97,38 @@ user-invocable: true
 scripts/setup.sh <task_id> <branch> <worktree_dir> "<task_desc>"
 ```
 
+### Step 3.5: 生成 Task Spec（推荐）
+
+对于复杂任务，在启动 Agent 前生成结构化 Spec。根据复杂度选择链路：
+
+**完整链路**（需求不清晰 / 跨模块 / >5 个文件）：
+1. 使用 `techplan-agent-v2` skill 分析代码库、生成技术方案
+2. 技术方案保存为 `.clawdbot/{task_id}-techplan.md`
+3. **确认门 ①**：向用户展示方案，确认后继续
+4. 使用 `task-spec-gen` skill 将方案 + 代码库拆为 bite-sized Task Spec
+5. Spec 保存为 `.clawdbot/{task_id}-spec.md`
+6. **确认门 ②**：向用户展示 spec，确认后继续
+
+**快速链路**（需求已清晰 / 3-5 个文件 / 有明确参考）：
+1. 直接使用 `task-spec-gen` skill（场景 B：需求 + 代码库）
+2. **确认门**：向用户展示 spec，确认后继续
+
+**跳过**（简单任务 / 改 1-2 个文件 / 逻辑清晰）：
+- 直接进入 Step 4 launch（Raw 模式）
+
+launch.sh 自动检测 spec 文件格式并切换到 Spec 模式 prompt（含 TDD / 边界 / 验收 / 三层降级硬约束）。
+
 ### Step 4: 启动 Agent
 
 ```bash
 scripts/launch.sh <task_id> <worktree_dir> <prompt_file> [agent]
 ```
+
+`prompt_file`：优先使用 `.clawdbot/{task_id}-spec.md`（Spec 模式），
+无 spec 时使用 `.clawdbot/{task_id}-desc.md`（Raw 模式）。
+
+launch.sh 会自动将 `.clawdbot/{task_id}-techplan.md`（如存在）复制到 worktree，
+供子 Agent 在 spec 不够明确时查阅。
 
 Agent 选择：Claude Code（默认）| Gemini CLI（超长上下文）| Codex CLI（用户指定）
 
@@ -178,6 +206,8 @@ callback 协议详情见 `references/CALLBACK-PROTOCOL.md`。
 
 ## 8. 文件职责
 
+### 编排器内部文件
+
 | 文件 | 职责 |
 |------|------|
 | `references/TASK-LIFECYCLE.md` | 状态转移权威定义 |
@@ -185,6 +215,22 @@ callback 协议详情见 `references/CALLBACK-PROTOCOL.md`。
 | `references/CALLBACK-PROTOCOL.md` | callback JSON schema 与验证规则 |
 | `references/ACPX-CLI.md` | ACPX 官方 CLI 完整文档（子命令、选项、session 行为、exit codes） |
 | `scripts/setup.sh` | 初始化 branch / worktree / memory |
-| `scripts/launch.sh` | 启动 Agent + 注入 callback 契约 + 拉起 watchdog |
+| `scripts/launch.sh` | 启动 Agent + 双模板 prompt（Raw/Spec）+ 三层降级 + 拉起 watchdog |
 | `scripts/watchdog.py` | 后台监控 session、提取 callback、状态转换、crash 检测 |
 | `workflows/issue-to-pr.lobster` | issue 到 PR 的确定性流程 |
+
+### 协作 SKILL（同级独立目录，通过 skill 名称引用）
+
+| SKILL | 职责 | 何时调用 |
+|-------|------|---------|
+| `techplan-agent-v2` | 深入读代码库 → 生成结构化技术方案 | Step 3.5 完整链路 |
+| `task-spec-gen` | 技术方案/需求 + 代码库 → bite-sized Task Spec | Step 3.5 完整/快速链路 |
+
+### 运行时产物（.clawdbot/）
+
+| 文件 | 产出者 | 消费者 |
+|------|--------|--------|
+| `{task_id}-desc.md` | setup.sh | launch.sh（Raw 模式 prompt） |
+| `{task_id}-techplan.md` | techplan-agent-v2 | task-spec-gen + launch.sh（复制到 worktree 供子 Agent 查阅） |
+| `{task_id}-spec.md` | task-spec-gen | launch.sh（Spec 模式 prompt） |
+| `{task_id}-full-prompt.md` | launch.sh | ACPX session（子 Agent 的完整 prompt） |
