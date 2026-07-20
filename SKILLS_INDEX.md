@@ -8,6 +8,7 @@
 | openclaw | dev | `ai-tmux-swarm` | 0.1.0 | active | `openclaw/dev/ai-tmux-swarm` |
 | shared | content | `baoyu-format-markdown` | 0.1.0 | active | `shared/content/baoyu-format-markdown` |
 | shared | content | `baoyu-markdown-to-html` | 0.1.0 | active | `shared/content/baoyu-markdown-to-html` |
+| shared | content | `koubo-script-writer` | 0.1.0 | active | `shared/content/koubo-script-writer` |
 | shared | content | `tech-article-writer` | 0.1.0 | active | `shared/content/tech-article-writer` |
 | shared | knowledge | `knowledge-forge` | 0.2.0 | active | `shared/knowledge/knowledge-forge` |
 | shared | media | `baoyu-article-illustrator` | 0.1.0 | active | `shared/media/baoyu-article-illustrator` |
