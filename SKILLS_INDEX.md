@@ -8,6 +8,7 @@
 | openclaw | dev | `ai-tmux-swarm` | 0.1.0 | active | `openclaw/dev/ai-tmux-swarm` |
 | shared | content | `baoyu-format-markdown` | 0.1.0 | active | `shared/content/baoyu-format-markdown` |
 | shared | content | `baoyu-markdown-to-html` | 0.1.0 | active | `shared/content/baoyu-markdown-to-html` |
+| shared | content | `tech-article-writer` | 0.1.0 | active | `shared/content/tech-article-writer` |
 | shared | knowledge | `knowledge-forge` | 0.2.0 | active | `shared/knowledge/knowledge-forge` |
 | shared | media | `baoyu-article-illustrator` | 0.1.0 | active | `shared/media/baoyu-article-illustrator` |
 | shared | media | `baoyu-comic` | 0.1.0 | active | `shared/media/baoyu-comic` |
@@ -44,6 +45,7 @@
 - `openclaw/dev/ai-tmux-swarm`: 使用 tmux + git worktree + 系统 cron 编排多个 AI 编码子任务并行开发。提供可复制到仓库内的 swarm scaffold，支持 manifest 驱动任务定义、依赖感知调度、异常重试、OpenClaw system event 通知，以及可选 Telegram 回退通知。适用于需要在本地仓库里长期并行跑多个 Codex / Claude Code 子任务的场景，例如模块并行实现、分阶段集成、验收合并。
 - `shared/content/baoyu-format-markdown`: Formats plain text or markdown files with frontmatter, titles, summaries, headings, bold, lists, and code blocks. Use when user asks to "format markdown", "beautify article", "add formatting", or improve article layout. Outputs to {filename}-formatted.md.
 - `shared/content/baoyu-markdown-to-html`: Converts Markdown to styled HTML with WeChat-compatible themes. Supports code highlighting, math, PlantUML, footnotes, alerts, and infographics. Use when user asks for "markdown to html", "convert md to html", "md转html", or needs styled HTML output from markdown.
+- `shared/content/tech-article-writer`: 技术分享文章写作引擎。输入主题素材（大纲/代码/笔记/口述要点/系列上下文），自动拆分章节、规划 mermaid 图表与代码示例位置、按既定风格写出完整教程式技术文章（Markdown）。风格基于《AI Coding 实战》系列 5.1-5.3 章节提炼：承上启下引言、为什么先于怎么做、prompt+验证闭环、验收清单收尾。触发词：写技术文章、技术教程、技术分享、写一篇教程、tech article、按系列风格写文章。
 - `shared/knowledge/knowledge-forge`: >
 - `shared/media/baoyu-article-illustrator`: Analyzes article structure, identifies positions requiring visual aids, generates illustrations with Type × Style two-dimension approach. Use when user asks to "illustrate article", "add images", "generate images for article", or "为文章配图".
 - `shared/media/baoyu-comic`: Knowledge comic creator supporting multiple art styles and tones. Creates original educational comics with detailed panel layouts and sequential image generation. Use when user asks to create "知识漫画", "教育漫画", "biography comic", "tutorial comic", or "Logicomix-style comic".
